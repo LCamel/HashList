@@ -2,17 +2,17 @@
 import { poseidon } from "circomlibjs";
 
 class HashList {
-    constructor(hashWidth) {
-        this.hashWidth = hashWidth;
+    constructor(hashInputCount) {
+        this.hashInputCount = hashInputCount;
         this.length = 0;
-        this.buf = new Array(hashWidth);
+        this.buf = new Array(hashInputCount);
     }
     add(item) {
         const len = this.length;
         if (len <= 1) {
             this.buf[len] = BigInt(item);
         } else {
-            const index = (len - 1) % (this.hashWidth - 1) + 1;
+            const index = (len - 1) % (this.hashInputCount - 1) + 1;
             if (index == 1) {
                 this.buf[0] = poseidon(this.buf);
             }
@@ -20,7 +20,7 @@ class HashList {
         }
         this.length = len + 1;
         console.log(">>>> buf");
-        for (var i = 0; i < this.hashWidth; i++) {
+        for (var i = 0; i < this.hashInputCount; i++) {
             console.log(this.buf[i]);
         }
         console.log("<<<< buf");
@@ -29,9 +29,9 @@ class HashList {
         // 0 1 2 3 4 5 6 7 8 9 10
         // 0 1 2 3 4 2 3 4 2 3 4
         const len = this.length;
-        const bound = (len <= 1) ? len : (len - 2) % (this.hashWidth - 1) + 2;
-        const tmp = new Array(this.hashWidth);
-        for (let i = 0; i < this.hashWidth; i++) {
+        const bound = (len <= 1) ? len : (len - 2) % (this.hashInputCount - 1) + 2;
+        const tmp = new Array(this.hashInputCount);
+        for (let i = 0; i < this.hashInputCount; i++) {
             tmp[i] = (i < bound) ? this.buf[i] : BigInt(0);
         }
         return poseidon(tmp);
