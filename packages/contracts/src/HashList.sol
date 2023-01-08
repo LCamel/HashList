@@ -62,14 +62,17 @@ library HashList4 {
             revert UnsupportedArityError();
         }
 
+        // prepare input
         uint256[7] memory input;
         input[0] = len;
         input[1] = (len < 2) ? 0 : (len - 2) / (HASH_INPUT_COUNT - 1); // output selector
-        input[2] = self.buf[0];
-        input[3] = self.buf[1];
-        input[4] = self.buf[2];
-        input[5] = self.buf[3];
+        uint256 bound = (len <= 1) ? len : (len - 2) % (4 - 1) + 2;
+        for (uint256 i = 0; i < bound; i++) {
+            input[2 + i] = self.buf[i];
+        }
+        // zeros
         input[6] = root;
+
 
         if (!verifier.verifyProof(a, b, c, input)) {
             revert VerificationError();
