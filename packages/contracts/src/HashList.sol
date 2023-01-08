@@ -10,6 +10,7 @@ library Poseidon4 {
     function poseidon(uint256[4] memory) public pure returns (uint256) {}
 }
 
+
 interface IVerifier4 {
     function verifyProof(
             uint[2] memory a,
@@ -18,6 +19,8 @@ interface IVerifier4 {
             uint[7] memory input
         ) external view returns (bool r);
 }
+library HashList4Depth4Arity2Verifier {} // address only
+
 
 library HashList4 {
     uint256 constant HASH_INPUT_COUNT = 4;
@@ -49,10 +52,12 @@ library HashList4 {
             revert LengthExceedTreeLeavesError();
         }
 
+        // choose the verifier
         IVerifier4 verifier;
         if (arity == 2) {
             if (depth == 4) {
-                verifier = IVerifier4(0x1234567890123456789012345678901234567890);
+                //verifier = IVerifier4(0xf3FAdCE461eF884d3c12819FeC77964501B907B9);
+                verifier = IVerifier4(address(HashList4Depth4Arity2Verifier));
             } else {
                 revert UnsupportedDepthError();
             }
