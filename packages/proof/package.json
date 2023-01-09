@@ -2,6 +2,7 @@
   "devDependencies": {
     "big-integer": "^1.6.51",
     "circomlibjs": "^0.0.8",
+    "ethers": "^5.7.2",
     "snarkjs": "^0.5.0"
   }
 }
