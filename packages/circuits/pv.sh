@@ -28,6 +28,6 @@ echo "==== for debugging: "
 
 echo "==== for forge cast: "
 SIG=$(jq .metadata.output.devdoc.methods ../${CIRCUIT}Verifier.sol/${CIRCUIT}Verifier.json | grep -oh 'verifyProof.*[)]')
-cat <<EOF | sed -e 's/"//g'
+cat <<EOF | sed -e 's/"//g' | tee call_forge_cast.txt
 cast call \$ADDR '${SIG}' '$(jq -c '.[0]' call_debug.txt)' '$(jq -c '.[1]' call_debug.txt)' '$(jq -c '.[2]' call_debug.txt)' '$(jq -c '.[3]' call_debug.txt)'
 EOF
