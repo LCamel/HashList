@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
+
 struct HashListData4 {
     uint256 length;
     uint256[4] buf;
@@ -46,7 +48,8 @@ library HashList4 {
     error UnsupportedDepthError();
     error VerificationError();
 
-    function verifyMerkleRoot(HashListData4 storage self, uint256[2] memory a, uint256[2][2] memory b, uint256[2] memory c, uint256 depth, uint256 arity, uint256 root) public view {
+    function verifyMerkleRoot(HashListData4 storage self, uint256[2] memory a, uint256[2][2] memory b, uint256[2] memory c, uint256 depth, uint256 arity, uint256 root) public view returns (bool) {
+        console.log("entering verifyMerkleRoot");
         uint256 len = self.length;
         if (len > arity ** depth) {
             revert LengthExceedTreeLeavesError();
@@ -66,21 +69,37 @@ library HashList4 {
         } else {
             revert UnsupportedArityError();
         }
+        console.log("now we have the verifier");
+        console.log(address(verifier));
 
         // prepare input
         uint256[7] memory input;
-        input[0] = len;
-        input[1] = (len < 2) ? 0 : (len - 2) / (HASH_INPUT_COUNT - 1); // output selector
+        input[0] = root;
+        input[1] = len;
+        input[2] = (len < 2) ? 0 : (len - 2) / (HASH_INPUT_COUNT - 1); // output selector
         uint256 bound = (len <= 1) ? len : (len - 2) % (4 - 1) + 2;
         for (uint256 i = 0; i < bound; i++) {
-            input[2 + i] = self.buf[i];
+            input[3 + i] = self.buf[i];
         }
-        // zeros
-        input[6] = root;
+        // zero-padded
 
 
-        if (!verifier.verifyProof(a, b, c, input)) {
-            revert VerificationError();
-        }
+        console.log("==== going to invoke the verifier");
+        console.log("a: ", a[0]);
+        console.log("a: ", a[1]);
+        console.log("b: ", b[0][0]);
+        console.log("b: ", b[0][1]);
+        console.log("b: ", b[1][0]);
+        console.log("b: ", b[1][1]);
+        console.log("c: ", c[0]);
+        console.log("c: ", c[1]);
+        console.log("input: ", input[0]);
+        console.log("input: ", input[1]);
+        console.log("input: ", input[2]);
+        console.log("input: ", input[3]);
+        console.log("input: ", input[4]);
+        console.log("input: ", input[5]);
+        console.log("input: ", input[6]);
+        return verifier.verifyProof(a, b, c, input);
     }
 }
