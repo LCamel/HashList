@@ -25,10 +25,16 @@ fi
 circom ${SRC_DIR}/${CIRCUIT}.circom --r1cs --wasm --sym --c -o ${OUT_DIR}
 
 cd ${OUT_DIR}/${CIRCUIT}_js
-npx snarkjs groth16 setup ${OUT_DIR}/${CIRCUIT}.r1cs ${PTAU} ${CIRCUIT}_0000.zkey
+
+# https://github.com/Polymer/tools/issues/757#issuecomment-469632864
+# allocation failure GC in old space requested
+# "snarkjs groth16 setup" needs a lot of cpu time and memory
+NODE_OPTIONS=--max_old_space_size=8192  npx snarkjs groth16 setup ${OUT_DIR}/${CIRCUIT}.r1cs ${PTAU} ${CIRCUIT}_0000.zkey
 echo "blah blah" | npx snarkjs zkey contribute ${CIRCUIT}_0000.zkey ${CIRCUIT}_0001.zkey --name="1st Contributor Name" -v
 npx snarkjs zkey export verificationkey ${CIRCUIT}_0001.zkey verification_key.json
 
 
 npx snarkjs zkey export solidityverifier ${CIRCUIT}_0001.zkey ${CIRCUIT}_verifier.sol
 cat ${CIRCUIT}_verifier.sol | sed 's/pragma solidity ^0.6.11/pragma solidity ^0.8.13/' | sed "s/contract Verifier/contract ${CIRCUIT}Verifier/" > ${GENERATED_SOURCES_DIR}/${CIRCUIT}Verifier.sol
+
+
