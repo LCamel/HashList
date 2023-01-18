@@ -22,24 +22,37 @@ class HashTower {
     // 1 + 4
     // 1
     add(item) {
-        const len = this.list.length;
-        var biItem = BigInt(item);
-        var zeroPrefixLen = 0;
+        var toAdd = BigInt(item);
+        const lvLengths = this.getLevelLengths();
         for (let lv = 0; lv < MAX_LEVELS; lv++) {
-            zeroPrefixLen += this.hashInputCount ** lv;
-            const origLvLen = (len < zeroPrefixLen) ? 0 : Math.floor((len - zeroPrefixLen) / (this.hashInputCount ** lv)) % this.hashInputCount + 1;
+            const origLvLen = lvLengths[lv];
             if (origLvLen < this.hashInputCount) {
-                this.buf[lv][origLvLen] = biItem;
+                this.buf[lv][origLvLen] = toAdd;
                 break;
             } else {
                 const hash = poseidon(this.buf[lv]);
-                this.buf[lv][0] = biItem;
-                biItem = hash; // to be processed in the upper level
+                this.buf[lv][0] = toAdd; // we don't have to clear the whole level
+                toAdd = hash; // to be added in the upper level
             }
         }
         this.list.push(BigInt(item));
     }
-
+    // in javascript, we can return the whole array of lengths
+    // in solidity, the memory cost should be considered
+    getLevelLengths() {
+        const len = this.list.length;
+        var lengths = []; // Array(MAX_LEVELS).fill(0);
+        var zeroIfLessThan = 0; // 1 + 4 + 16 + 64 + ...
+        var pow = 1; // pow = hashInputCount ** lv
+        for (let lv = 0; lv < MAX_LEVELS; lv++) {
+            zeroIfLessThan += pow;
+            const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) % this.hashInputCount + 1;
+            lengths.push(lvLen);
+            if (lvLen == 0) break;
+            pow *= this.hashInputCount;
+        }
+        return lengths;
+    }
     show() {
         console.log("======== show ========")
         for (let lv = MAX_LEVELS - 1; lv >= 0; lv--) {
@@ -51,11 +64,22 @@ class HashTower {
                 console.log(msg);
             }
         }
+        console.log(this.getLevelLengths());
     }
 
+
+    // where is my "root" for the item ?
+    generateProof(item) {
+        const idx = this.list.indexOf(item);
+        if (idx < 0) return undefined;
+        for (let lv = MAX_LEVELS - 1; lv >= 0; lv--) {
+        }
+
+    }
 }
 
 const ht = new HashTower(4);
+ht.show();
 for (let i = 1; i < 86; i++) {
     ht.add(i);
     ht.show();
