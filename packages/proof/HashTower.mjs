@@ -13,29 +13,39 @@ class HashTower {
         //this.length = 0; // since we have this.list, just use its length instead
         this.buf = Array(MAX_LEVELS);
         for (let lv = 0; lv < MAX_LEVELS; lv++) {
-            this.buf[lv] = Array(hashInputCount);
+            this.buf[lv] = Array(hashInputCount).fill(0); // fill for visual affects only
+        }
+    }
+    hash(arr) {
+        //return poseidon(arr);
+
+        // for visualizing
+        if (Array.isArray(arr[0])) {
+            return [arr[0][0], arr[this.hashInputCount - 1][1]];
+        } else {
+            return [arr[0], arr[this.hashInputCount - 1]];
         }
     }
 
-    // assuming that we can never fill up the whole tower (TODO!)
-    // 1 + 4 + 16
-    // 1 + 4
-    // 1
+    // assuming that we can never fill up the whole tower (TODO)
     add(item) {
+        this.profiling = { write: 0, hash: 0};
         var toAdd = BigInt(item);
         const lvLengths = this.getLevelLengths();
         for (let lv = 0; lv < MAX_LEVELS; lv++) {
             const origLvLen = lvLengths[lv];
             if (origLvLen < this.hashInputCount) {
-                this.buf[lv][origLvLen] = toAdd;
+                this.buf[lv][origLvLen] = toAdd;      this.profiling.write++;
                 break;
             } else {
-                const hash = poseidon(this.buf[lv]);
-                this.buf[lv][0] = toAdd; // we don't have to clear the whole level
+                const hash = this.hash(this.buf[lv]); this.profiling.hash++;
+                this.buf[lv].fill(BigInt(0)); // for visualizing only
+                                              // we don't really have to clear the whole level
+                this.buf[lv][0] = toAdd;              this.profiling.write++;
                 toAdd = hash; // to be added in the upper level
             }
         }
-        this.list.push(BigInt(item));
+        this.list.push(BigInt(item));                 this.profiling.write++; // len
     }
     // in javascript, we can return the whole array of lengths
     // in solidity, the memory cost should be considered
@@ -53,8 +63,9 @@ class HashTower {
         }
         return lengths;
     }
+
     show() {
-        console.log("======== show ========")
+        console.clear();
         for (let lv = MAX_LEVELS - 1; lv >= 0; lv--) {
             if (this.buf[lv].some((item) => item)) {
                 var msg = "lv " + lv;
@@ -64,19 +75,16 @@ class HashTower {
                 console.log(msg);
             }
         }
-        console.log(this.getLevelLengths());
+        console.log("\n\n");
+        console.log("length: " + this.list.length);
+        console.log("profiling:", this.profiling);
+        var lengths = this.getLevelLengths(); lengths.pop();
+        console.log("level lengths: " + lengths);
+        var start = new Date().getTime(); while (new Date().getTime() < start + 1000);
     }
 
-
-    // where is my "root" for the item ?
-    generateProof(item) {
-        const idx = this.list.indexOf(item);
-        if (idx < 0) return undefined;
-        for (let lv = MAX_LEVELS - 1; lv >= 0; lv--) {
-        }
-
-    }
 }
+
 
 const ht = new HashTower(4);
 ht.show();
