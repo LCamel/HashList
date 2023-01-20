@@ -5,15 +5,15 @@ import { poseidon } from "circomlibjs"; // for off-line computing
 
 
 class HashTower {
-    constructor(hashInputCount, H) {
-        this.hashInputCount = hashInputCount;
+    constructor(W, H) {
+        this.W = W;
         this.H = H;
         this.list = [];    // for generating circuit inputs
                            // the on-chain HashList doesn't have this field
         //this.length = 0; // since we have this.list, just use its length instead
-        this.buf = Array(this.H);
-        for (let lv = 0; lv < this.H; lv++) {
-            this.buf[lv] = Array(hashInputCount).fill(0); // fill for visual affects only
+        this.buf = Array(H);
+        for (let lv = 0; lv < H; lv++) {
+            this.buf[lv] = Array(W).fill(0); // fill 0 for visual affects only
         }
     }
     hash(arr) {
@@ -21,9 +21,9 @@ class HashTower {
 
         // for visualizing
         if (Array.isArray(arr[0])) {
-            return [arr[0][0], arr[this.hashInputCount - 1][1]];
+            return [arr[0][0], arr[this.W - 1][1]];
         } else {
-            return [arr[0], arr[this.hashInputCount - 1]];
+            return [arr[0], arr[this.W - 1]];
         }
     }
 
@@ -34,7 +34,7 @@ class HashTower {
         const lvLengths = this.getLevelLengths();
         for (let lv = 0; lv < this.H; lv++) {
             const origLvLen = lvLengths[lv];
-            if (origLvLen < this.hashInputCount) {
+            if (origLvLen < this.W) {
                 this.buf[lv][origLvLen] = toAdd;      this.profiling.write++;
                 break;
             } else {
@@ -53,13 +53,13 @@ class HashTower {
         const len = this.list.length;
         var lengths = []; // Array(this.H).fill(0);
         var zeroIfLessThan = 0; // 1 + 4 + 16 + 64 + ...
-        var pow = 1; // pow = hashInputCount ** lv
+        var pow = 1; // pow = this.W ** lv
         for (let lv = 0; lv < this.H; lv++) {
             zeroIfLessThan += pow;
-            const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) % this.hashInputCount + 1;
+            const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) % this.W + 1;
             lengths.push(lvLen);
             if (lvLen == 0) break;
-            pow *= this.hashInputCount;
+            pow *= this.W;
         }
         return lengths;
     }
@@ -68,7 +68,7 @@ class HashTower {
         console.clear();
         for (let lv = this.H - 1; lv >= 0; lv--) {
             var msg = "lv " + lv;
-            for (let i = 0; i < this.hashInputCount; i++) {
+            for (let i = 0; i < this.W; i++) {
                 msg += "\t" + this.buf[lv][i];
             }
             console.log(msg);
@@ -78,11 +78,11 @@ class HashTower {
         console.log("profiling:", this.profiling);
         var lengths = this.getLevelLengths(); lengths.pop();
         console.log("level lengths: " + lengths);
-        console.log("range: ", ht.getRange(10));
+        console.log("getPositions(0): ", ht.getPositions(0));
         var start = new Date().getTime(); while (new Date().getTime() < start + 1000);
     }
 
-    getRange(idx) {
+    getPositions(idx) {
         if (idx < 0 || this.list.length <= idx) return undefined;
         const lvLengths = this.getLevelLengths();
         var start = this.list.length;
@@ -94,7 +94,7 @@ class HashTower {
                     return [lv, lvIdx, start, pow];
                 }
             }
-            pow *= this.hashInputCount;
+            pow *= this.W;
         }
         return undefined;
     }
