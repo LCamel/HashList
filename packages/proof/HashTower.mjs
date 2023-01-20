@@ -1,16 +1,11 @@
 "use strict";
 import { poseidon } from "circomlibjs"; // for off-line computing
-//import { groth16 } from "snarkjs";
-//import { ethers } from "ethers";
-
 
 class HashTower {
     constructor(W, H) {
         this.W = W;
         this.H = H;
-        this.list = [];    // for generating circuit inputs
-                           // the on-chain HashList doesn't have this field
-        //this.length = 0; // since we have this.list, just use its length instead
+        this.length = 0;
         this.buf = Array(H);
         for (let lv = 0; lv < H; lv++) {
             this.buf[lv] = Array(W).fill(0); // fill 0 for visual affects only
@@ -46,11 +41,12 @@ class HashTower {
                 toAdd = hash; // to be added in the upper level
             }
         }
-        this.list.push(BigInt(item));                 this.profiling.write++; // len
+        this.length++;                                this.profiling.write++;
     }
+    // returns a zero-terminated list
     // in solidity, the memory cost should be considered
     getLevelLengths() {
-        const len = this.list.length;
+        const len = this.length;
         var lengths = []; // Array(this.H).fill(0);
         var zeroIfLessThan = 0; // 1 + 4 + 16 + 64 + ...
         var pow = 1; // pow = this.W ** lv
@@ -74,7 +70,7 @@ class HashTower {
             console.log(msg);
         }
         console.log("\n\n");
-        console.log("length: " + this.list.length);
+        console.log("length: " + this.length);
         console.log("profiling:", this.profiling);
         var lengths = this.getLevelLengths(); lengths.pop();
         console.log("level lengths: " + lengths);
@@ -83,9 +79,9 @@ class HashTower {
     }
 
     getPositions(idx) {
-        if (idx < 0 || this.list.length <= idx) return undefined;
+        if (idx < 0 || this.length <= idx) return undefined;
         const lvLengths = this.getLevelLengths();
-        var start = this.list.length;
+        var start = this.length;
         var pow = 1;
         for (let lv = 0; lv < this.H; lv++) {
             for (let lvIdx = lvLengths[lv] - 1; lvIdx >= 0; lvIdx--) {
