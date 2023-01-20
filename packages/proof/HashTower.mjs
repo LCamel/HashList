@@ -4,15 +4,15 @@ import { poseidon } from "circomlibjs"; // for off-line computing
 //import { ethers } from "ethers";
 
 
-const MAX_LEVELS = 32;
 class HashTower {
-    constructor(hashInputCount) {
+    constructor(hashInputCount, H) {
         this.hashInputCount = hashInputCount;
+        this.H = H;
         this.list = [];    // for generating circuit inputs
                            // the on-chain HashList doesn't have this field
         //this.length = 0; // since we have this.list, just use its length instead
-        this.buf = Array(MAX_LEVELS);
-        for (let lv = 0; lv < MAX_LEVELS; lv++) {
+        this.buf = Array(this.H);
+        for (let lv = 0; lv < this.H; lv++) {
             this.buf[lv] = Array(hashInputCount).fill(0); // fill for visual affects only
         }
     }
@@ -32,7 +32,7 @@ class HashTower {
         this.profiling = { write: 0, hash: 0 };
         var toAdd = BigInt(item);
         const lvLengths = this.getLevelLengths();
-        for (let lv = 0; lv < MAX_LEVELS; lv++) {
+        for (let lv = 0; lv < this.H; lv++) {
             const origLvLen = lvLengths[lv];
             if (origLvLen < this.hashInputCount) {
                 this.buf[lv][origLvLen] = toAdd;      this.profiling.write++;
@@ -51,10 +51,10 @@ class HashTower {
     // in solidity, the memory cost should be considered
     getLevelLengths() {
         const len = this.list.length;
-        var lengths = []; // Array(MAX_LEVELS).fill(0);
+        var lengths = []; // Array(this.H).fill(0);
         var zeroIfLessThan = 0; // 1 + 4 + 16 + 64 + ...
         var pow = 1; // pow = hashInputCount ** lv
-        for (let lv = 0; lv < MAX_LEVELS; lv++) {
+        for (let lv = 0; lv < this.H; lv++) {
             zeroIfLessThan += pow;
             const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) % this.hashInputCount + 1;
             lengths.push(lvLen);
@@ -66,7 +66,7 @@ class HashTower {
 
     show() {
         console.clear();
-        for (let lv = MAX_LEVELS - 1; lv >= 0; lv--) {
+        for (let lv = this.H - 1; lv >= 0; lv--) {
             var msg = "lv " + lv;
             for (let i = 0; i < this.hashInputCount; i++) {
                 msg += "\t" + this.buf[lv][i];
@@ -87,7 +87,7 @@ class HashTower {
         const lvLengths = this.getLevelLengths();
         var start = this.list.length;
         var pow = 1;
-        for (let lv = 0; lv < MAX_LEVELS; lv++) {
+        for (let lv = 0; lv < this.H; lv++) {
             for (let lvIdx = lvLengths[lv] - 1; lvIdx >= 0; lvIdx--) {
                 start -= pow;
                 if (start <= idx) {
@@ -102,7 +102,7 @@ class HashTower {
 }
 
 
-const ht = new HashTower(4);
+const ht = new HashTower(4, 16);
 ht.show();
 for (let i = 0; i < 85; i++) {
     ht.add(i);
