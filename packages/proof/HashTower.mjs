@@ -8,7 +8,7 @@ class HashTower {
         this.length = 0;
         this.buf = Array(H);
         for (let lv = 0; lv < H; lv++) {
-            this.buf[lv] = Array(W).fill(0); // fill 0 for visual affects only
+            this.buf[lv] = Array(W).fill('_'); // fill _ for visual affects only
         }
     }
     hash(arr) {
@@ -34,9 +34,9 @@ class HashTower {
                 break;
             } else {
                 const hash = this.hash(this.buf[lv]); this.profiling.hash++;
-                this.buf[lv].fill(BigInt(0)); // for visualizing only
-                                              // we don't really have to clear the whole level
-                                              // this step MUST be avoided in the contract
+                this.buf[lv].fill('_'); // for visualizing only
+                                        // we don't really have to clear the whole level
+                                        // this step MUST be avoided in the contract
                 this.buf[lv][0] = toAdd;              this.profiling.write++;
                 toAdd = hash; // to be added in the upper level
             }
