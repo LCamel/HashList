@@ -1,12 +1,12 @@
 "use strict";
 import { poseidon } from "circomlibjs"; // for off-line computing
 
-const prof = {
+const profiler = {
     read: 0, write: 0, hash: 0,
     r: function() { this.read++ },
     w: function() { this.write++ },
     h: function() { this.hash++ },
-    toString: function() { return `r: ${this.read} w: ${this.write} h: ${this.hash}` }
+    toString: function() { return `read: ${this.read} write: ${this.write} hash: ${this.hash}` }
 };
 
 const W = 4;
@@ -19,16 +19,16 @@ class HashTowerData {
         this.length = 0;
         this.buf = Array.from({length: H}, () => Array(W).fill('_')); // fill _ for visual affects only
     }
-    getLength()        { prof.r(); return this.length; }
-    setLength(l)       { prof.w(); this.length = l; }
-    getBuf(lv, idx)    { prof.r(); return this.buf[lv][idx]; }
-    setBuf(lv, idx, v) { prof.w(); this.buf[lv][idx] = v; }
+    getLength()        { profiler.r(); return this.length; }
+    setLength(l)       { profiler.w(); this.length = l; }
+    getBuf(lv, idx)    { profiler.r(); return this.buf[lv][idx]; }
+    setBuf(lv, idx, v) { profiler.w(); this.buf[lv][idx] = v; }
 }
 
 // simulating a Solidity library
 class HashTower {
     hash(arr) {
-        prof.h();
+        profiler.h();
         return !DEBUG_RANGE ? poseidon(arr) : [arr[0][0], arr[W - 1][1]];
     }
     add(self, item) {
@@ -67,7 +67,7 @@ class HashTower {
     // direct access without triggering profiling
     show(len, buf) {
         console.clear();
-        var lengths = this.getLevelLengths(len);
+        var lvLengths = this.getLevelLengths(len);
         for (let lv = H - 1; lv >= 0; lv--) {
             var msg = "lv " + lv + "\t";
             for (let i = 0; i < W; i++) {
@@ -75,15 +75,15 @@ class HashTower {
                 msg += s.length > 20
                     ? s.substring(0, 17) + "..."
                     : s.padStart(20, " ");
-                msg += (i == lengths[lv] - 1) ? " ↵  " + "\x1b[90m" : "    "; // ↵
+                msg += (i == lvLengths[lv] - 1) ? " ↵  " + "\x1b[90m" : "    "; // ↵
             }
             msg += "\x1b[0m";
             console.log(msg);
         }
         console.log("\n");
         console.log("length: " + len);
-        console.log("profiling:", prof.toString());
-        console.log("level lengths: " + lengths + ",...");
+        console.log("profiling:", profiler.toString());
+        console.log("level lengths: " + lvLengths + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
         const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
     }
