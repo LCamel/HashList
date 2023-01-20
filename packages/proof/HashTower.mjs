@@ -68,18 +68,20 @@ class HashTower4 {
     // direct access without triggering profiling
     show(len, buf) {
         console.clear();
+        var lengths = this.getLevelLengths(len);
         for (let lv = H - 1; lv >= 0; lv--) {
-            var msg = "lv " + lv;
+            var msg = "lv " + lv + "\t";
             for (let i = 0; i < W; i++) {
-                msg += "\t" + buf[lv][i];
+                msg += ("" + buf[lv][i]).padStart(20, " ")
+                       + ((i == lengths[lv] - 1) ? " }" + "\x1b[90m" : "  ");
             }
+            msg += "\x1b[0m";
             console.log(msg);
         }
-        console.log("\n\n");
+        console.log("\n");
         console.log("length: " + len);
         console.log("profiling:", prof.toString());
-        var lengths = this.getLevelLengths(len); lengths.pop();
-        console.log("level lengths: " + lengths);
+        console.log("level lengths: " + lengths + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
         var start = new Date().getTime(); while (new Date().getTime() < start + 1000);
     }
