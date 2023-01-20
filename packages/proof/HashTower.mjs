@@ -29,22 +29,13 @@ class HashTowerData {
 class HashTower {
     hash(arr) {
         prof.h();
-        if (!DEBUG_RANGE) {
-            return poseidon(arr);
-        } else {
-            return [arr[0][0], arr[W - 1][1]]; // for visualizing
-        }
+        return !DEBUG_RANGE ? poseidon(arr) : [arr[0][0], arr[W - 1][1]];
     }
     add(self, item) {
         const len = self.getLength();
         const lvLengths = this.getLevelLengths(len);
 
-        var toAdd;
-        if (!DEBUG_RANGE) {
-            toAdd = BigInt(item);
-        } else {
-            toAdd = [item, item]; // for visualizing
-        }
+        var toAdd = !DEBUG_RANGE ? BigInt(item) : [item, item];
 
         for (let lv = 0; lv < H; lv++) {
             const origLvLen = lvLengths[lv];
@@ -52,8 +43,8 @@ class HashTower {
                 self.setBuf(lv, origLvLen, toAdd);
                 break;
             } else {
-                const bufLv = Array.from({length: W}, (v, i) => self.getBuf(lv, i));
-                const hash = this.hash(bufLv);
+                const bufOfLv = Array.from({length: W}, (v, i) => self.getBuf(lv, i));
+                const hash = this.hash(bufOfLv);
                 self.setBuf(lv, 0, toAdd);
                 toAdd = hash; // to be added in the upper level
             }
@@ -84,7 +75,7 @@ class HashTower {
                 msg += s.length > 20
                     ? s.substring(0, 17) + "..."
                     : s.padStart(20, " ");
-                msg += (i == lengths[lv] - 1) ? " |  " + "\x1b[90m" : "    ";
+                msg += (i == lengths[lv] - 1) ? " ↵  " + "\x1b[90m" : "    "; // ↵
             }
             msg += "\x1b[0m";
             console.log(msg);
@@ -94,7 +85,7 @@ class HashTower {
         console.log("profiling:", prof.toString());
         console.log("level lengths: " + lengths + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
-        var start = new Date().getTime(); while (new Date().getTime() < start + 1000);
+        const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
     }
     // only for proving
     getPositions(idx, len) {
@@ -121,6 +112,6 @@ const ht = new HashTower();
 ht.show(htd.length, htd.buf);
 for (let i = 0; i < 10000000; i++) {
     ht.add(htd, i);
-    //ht.show(htd.length, htd.buf);
+    ht.show(htd.length, htd.buf);
 }
 ht.show(htd.length, htd.buf);
