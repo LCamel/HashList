@@ -15,10 +15,11 @@ class SquareList(VGroup):
         return self.submobjects[i]
 
 def connect(scene, o0, dir0, o1, dir1):
-    lam = lambda: Line(o0.get_edge_center(dir0), o1.get_edge_center(dir1))
-    line = lam()
+    create = lambda: Line(o0.get_edge_center(dir0), o1.get_edge_center(dir1))
+    update = lambda mobj: mobj.become(create())
+    line = create()
     scene.add(line)
-    line.add_updater(lambda mobj: mobj.become(lam()))
+    line.add_updater(update)
     return line
 
 config.frame_width=20  # set frame_height doesn't work
