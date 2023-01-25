@@ -58,10 +58,17 @@ class A(MovingCameraScene):
         oldVGroups = [ VGroup() for lv in range(H) ]
         oldVGroups[0].add(items)
 
+        addingText = Text("adding ")
+        addingText.shift(DOWN * 4)
+        self.add(addingText)
         for itemIdx in range(21):
             len = itemIdx
             lvLengths = getLevelLengths(len, W, H)
             firstNotFull = next(i for i, v in enumerate(lvLengths) if v < W)
+
+            addingText.become(Text("adding " + str(itemIdx)), match_center=True)
+            self.wait(2 if firstNotFull > 1 else 0.5)
+
             target = lvLengths[firstNotFull]
             for lv in range(firstNotFull - 1, -1, -1):
                 ts = lists[lv + 1].square(target)
@@ -75,6 +82,7 @@ class A(MovingCameraScene):
                 lists[lv] = lists[lv].copy()
                 for s in lists[lv]: s.set_fill(BLACK, opacity=0.5)
                 self.add(lists[lv])
+                for s in old: s.set_fill(YELLOW, opacity=0.5)
 
                 oldVGroups[lv].add(old)
                 self.play(oldVGroups[lv].animate.shift(LEFT * 4))
@@ -83,9 +91,9 @@ class A(MovingCameraScene):
                 #self.wait(1)
             ts = lists[0].square(target)
             connect(self, items.square(itemIdx), UP, ts, DOWN)
-            self.play(ts.animate.set_fill(BLUE, opacity=0.5))  # opacity is mandatary
-            if firstNotFull > 0:
-                self.wait(1)
+            rt = 1 if firstNotFull > 0 else 0.5
+            self.play(ts.animate.set_fill(BLUE, opacity=0.5), run_time=rt)  # opacity is mandatary
+            if (firstNotFull > 0): self.wait(1)
 
         self.wait(5)
 
