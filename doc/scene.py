@@ -43,7 +43,7 @@ class A(MovingCameraScene):
         #self.add(NumberPlane())
 
 
-        items = SquareList(10, 0, -2)
+        items = SquareList(21, 0, -2)
         self.add(items)
 
         W = 4
@@ -55,7 +55,10 @@ class A(MovingCameraScene):
             lists.append(list)
             self.add(list)
 
-        for itemIdx in range(10):
+        oldVGroups = [ VGroup() for lv in range(H) ]
+        oldVGroups[0].add(items)
+
+        for itemIdx in range(21):
             len = itemIdx
             lvLengths = getLevelLengths(len, W, H)
             firstNotFull = next(i for i, v in enumerate(lvLengths) if v < W)
@@ -64,17 +67,25 @@ class A(MovingCameraScene):
                 ts = lists[lv + 1].square(target)
                 lines = [ connect(self, lists[lv].square(i), UP, ts, DOWN) for i in range(W) ]
                 self.play(*[Create(line) for line in lines])
-                self.wait(1)
+                #self.wait(1)
                 self.play(ts.animate.set_fill(BLUE, opacity=0.5))  # opacity is mandatary
-                self.wait(1)
-                self.play(*[s.animate.set_fill(BLACK, opacity=1) for s in lists[lv]])  # opacity is mandatary
+                #self.wait(1)
+
+                old = lists[lv]
+                lists[lv] = lists[lv].copy()
+                for s in lists[lv]: s.set_fill(BLACK, opacity=0.5)
+                self.add(lists[lv])
+
+                oldVGroups[lv].add(old)
+                self.play(oldVGroups[lv].animate.shift(LEFT * 4))
+                #self.play(*[s.animate.set_fill(BLACK, opacity=1) for s in lists[lv]])  # opacity is mandatary
                 target = 0
-                self.wait(1)
+                #self.wait(1)
             ts = lists[0].square(target)
             connect(self, items.square(itemIdx), UP, ts, DOWN)
             self.play(ts.animate.set_fill(BLUE, opacity=0.5))  # opacity is mandatary
+            if firstNotFull > 0:
+                self.wait(1)
 
-
-        self.play(items.animate.shift(LEFT * 4))
-        self.wait(1)
+        self.wait(5)
 
