@@ -74,7 +74,14 @@ class A(MovingCameraScene):
             firstNotFull = next(i for i, v in enumerate(lvLengths) if v < W)
 
             addingText.become(Text("adding " + str(itemIdx)), match_center=True)
-            self.wait(2 if firstNotFull > 1 else 0.5)
+            self.wait(1)
+
+            fullTexts = []
+            for lv in range(firstNotFull):
+                t = Text("full")
+                t.next_to(lists[lv].square(W - 1), RIGHT)
+                fullTexts.append(t)
+                self.add(t)
 
             target = lvLengths[firstNotFull]
             for lv in range(firstNotFull - 1, -1, -1):
@@ -92,9 +99,10 @@ class A(MovingCameraScene):
                 for s in old: s.set_fill(GRAY, opacity=0.5)
 
                 oldVGroups[lv].add(old)
+                self.remove(fullTexts[lv])
                 self.play(oldVGroups[lv].animate.shift(LEFT * 4))
                 target = 0
-                #self.wait(1)
+
             ts = lists[0].square(target)
             line = Line(items.square(itemIdx).get_edge_center(UP), ts.get_edge_center(DOWN))
             rt = 1 if firstNotFull > 0 else 0.5
