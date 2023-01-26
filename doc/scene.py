@@ -9,10 +9,15 @@ def squareBottomLeftAt(x, y):
 class SquareList(VGroup):
     def __init__(self, len, x0, y0):
         super().__init__()
+        self.length = len
         for i in range(len):
             self.add(squareBottomLeftAt(x0 + i, y0))
     def square(self, i):
         return self.submobjects[i]
+    def setText(self, i, t):
+        text = Text(t)
+        text.move_to(self.square(i).get_center())
+        self.add(text)
 
 def connect(scene, o0, dir0, o1, dir1):
     creator = lambda: Line(o0.get_edge_center(dir0), o1.get_edge_center(dir1))
@@ -44,6 +49,8 @@ class A(MovingCameraScene):
 
 
         items = SquareList(21, 0, -2)
+        for i in range(items.length):
+            items.setText(i, str(i))
         self.add(items)
 
         W = 4
@@ -61,7 +68,7 @@ class A(MovingCameraScene):
         addingText = Text("adding ")
         addingText.shift(DOWN * 4)
         self.add(addingText)
-        for itemIdx in range(21):
+        for itemIdx in range(items.length):
             len = itemIdx
             lvLengths = getLevelLengths(len, W, H)
             firstNotFull = next(i for i, v in enumerate(lvLengths) if v < W)
@@ -82,7 +89,7 @@ class A(MovingCameraScene):
                 lists[lv] = lists[lv].copy()
                 for s in lists[lv]: s.set_fill(BLACK, opacity=0.5)
                 self.add(lists[lv])
-                for s in old: s.set_fill(YELLOW, opacity=0.5)
+                for s in old: s.set_fill(GRAY, opacity=0.5)
 
                 oldVGroups[lv].add(old)
                 self.play(oldVGroups[lv].animate.shift(LEFT * 4))
