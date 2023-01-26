@@ -86,13 +86,14 @@ class A(MovingCameraScene):
 
                 oldVGroups[lv].add(old)
                 self.play(oldVGroups[lv].animate.shift(LEFT * 4))
-                #self.play(*[s.animate.set_fill(BLACK, opacity=1) for s in lists[lv]])  # opacity is mandatary
                 target = 0
                 #self.wait(1)
             ts = lists[0].square(target)
-            connect(self, items.square(itemIdx), UP, ts, DOWN)
+            line = Line(items.square(itemIdx).get_edge_center(UP), ts.get_edge_center(DOWN))
             rt = 1 if firstNotFull > 0 else 0.5
-            self.play(ts.animate.set_fill(BLUE, opacity=0.5), run_time=rt)  # opacity is mandatary
+            self.play(ts.animate.set_fill(BLUE, opacity=0.5),
+                      ShowPassingFlash(line.set_color(BLUE), time_width=10), run_time=rt)
+            self.remove(line) # ?
             if (firstNotFull > 0): self.wait(1)
 
         self.wait(5)
