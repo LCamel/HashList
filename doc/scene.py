@@ -78,7 +78,7 @@ class A(MovingCameraScene):
 
             fullTexts = []
             for lv in range(firstNotFull):
-                t = Text("full")
+                t = Text("full ⇒ hash")
                 t.next_to(lists[lv].square(W - 1), RIGHT)
                 fullTexts.append(t)
                 self.add(t)
