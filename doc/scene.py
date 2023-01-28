@@ -73,6 +73,12 @@ class A(MovingCameraScene):
             lvLengths = getLevelLengths(len, W, H)
             firstNotFull = next(i for i, v in enumerate(lvLengths) if v < W)
 
+            highlightedSquare = items.square(itemIdx).copy()
+            highlightedSquare.color = YELLOW
+            highlightedSquare.stroke_width *= 2
+            oldVGroups[0].add(highlightedSquare)
+            self.add(highlightedSquare)
+
             addingText.become(Text("adding " + str(itemIdx)), match_center=True)
             self.wait(1)
 
@@ -109,6 +115,8 @@ class A(MovingCameraScene):
             self.play(ts.animate.set_fill(BLUE, opacity=0.5),
                       ShowPassingFlash(line.set_color(BLUE), time_width=10), run_time=rt)
             self.remove(line) # ?
+            oldVGroups[0].remove(highlightedSquare)
+            self.remove(highlightedSquare)
             if (firstNotFull > 0): self.wait(1)
 
         self.wait(5)
