@@ -47,8 +47,9 @@ class A(MovingCameraScene):
     def construct(self):
         #self.add(NumberPlane())
 
-
-        items = SquareList(21, 0, -2)
+        items = SquareList(64*1 + 16*2 + 4*2 + 1*1, 0, -2)
+        #items = SquareList(21, 0, -2)
+        #items = SquareList(9, 0, -2)
         for i in range(items.length):
             items.setText(i, str(i))
         self.add(items)
@@ -118,6 +119,30 @@ class A(MovingCameraScene):
             oldVGroups[0].remove(highlightedSquare)
             self.remove(highlightedSquare)
             if (firstNotFull > 0): self.wait(1)
+        self.remove(addingText)
+       
 
-        self.wait(5)
+        lvLengths = getLevelLengths(items.length, W, H)
+        print("########", lvLengths)
+        shifts = []
+        for lv in range(1, H):
+            if (lvLengths[lv] == 0):
+                break
+            sqs = []
+            for arr in oldVGroups[lv].submobjects:
+                for sq in arr.submobjects:
+                    sqs.append(sq) 
+            for i in range(lvLengths[lv]):
+                sqs.append(lists[lv].square(i))
+            for i, sq in enumerate(sqs):
+                x0 = sq.get_center()[0]
+                x1 = items.square((i + 1) * (W ** lv) - 1).get_center()[0]
+                shifts.append(sq.animate.shift(LEFT * (x0 - x1)))
+        forWidth = VGroup(items.square(0), lists[0].square(W - 1))
+        self.play(self.camera.frame.animate.move_to(
+            [forWidth.get_center()[0], 0, 0]).set(width = forWidth.width + 4), run_time=2)
+        self.wait(1)
+        self.play(*shifts, run_time=3)
+
+        self.wait(10)
 
