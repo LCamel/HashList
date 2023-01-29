@@ -35,7 +35,7 @@ class HashTower {
         const len = self.getLength();
         const lvLengths = this.getLevelLengths(len);
 
-        var toAdd = !DEBUG_RANGE ? BigInt(item) : [item, item];
+        var toAdd = !DEBUG_RANGE ? BigInt(item) : [len, len]; // orig len == current idx
 
         for (let lv = 0; lv < H; lv++) {
             const origLvLen = lvLengths[lv];
