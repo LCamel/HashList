@@ -9,8 +9,9 @@ const profiler = {
     toString: function() { return `read: ${this.read} write: ${this.write} hash: ${this.hash}` }
 };
 
+// 4^0 + 4^1 + ... + 4^12 = 22369621,  4^0 + 4^1 + ... + 4^19 = 366503875925
 const W = 4;
-const H = 20; // 4^0 + 4^1 + ... + 4^19 = 366503875925
+const H = 12;
 const DEBUG_RANGE = true;
 
 // simulating a Solidity storage struct
@@ -27,8 +28,11 @@ class HashTowerData {
 
 const events = Array.from({length: H}, () => []);
 function emit(lv, lvIdx, val) {
-    console.log("emit: lv: ", lv, " lvIdx: ", lvIdx, " val: ", val);
+    //console.log("emit: lv: ", lv, " lvIdx: ", lvIdx, " val: ", val);
     events[lv][lvIdx] = val;
+}
+function getEvents(lv, start, end) {
+    return events[lv].slice(start, end); // end exclusive
 }
 
 // simulating a Solidity library
@@ -80,7 +84,7 @@ class HashTower {
     }
     // direct access without triggering profiling
     show(len, buf) {
-        //console.clear();
+        console.clear();
         var lvLengths = this.getLevelLengths(len);
         for (let lv = H - 1; lv >= 0; lv--) {
             var msg = "lv " + lv + "\t";
@@ -100,6 +104,8 @@ class HashTower {
         console.log("level lengths     : " + lvLengths + ",...");
         console.log("level full lengths: " + this.getLevelFullLengths(len) + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
+        console.log("proof for idx 10: ");
+        this.generateMerkleProof(10).map((l) => console.log(JSON.stringify(l)));
         const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
     }
     // only for proving
@@ -136,7 +142,16 @@ class HashTower {
         return everyIndexMatches && someLvEq;
     }
     generateMerkleProof(idx) {
-
+        const lists = [];
+        for (let lv = 0; lv < H; lv++) {
+            const lvStart = idx - idx % W;
+            const list = getEvents(lv, lvStart, lvStart + W);
+            if (list[0] === undefined) break;
+            lists.push(list);
+            if (list[W - 1] === undefined) break;
+            idx /= W;
+        }
+        return lists;
     }
 }
 
