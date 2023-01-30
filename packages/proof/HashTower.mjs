@@ -25,6 +25,12 @@ class HashTowerData {
     setBuf(lv, idx, v) { profiler.w(); this.buf[lv][idx] = v; }
 }
 
+const events = Array.from({length: H}, () => []);
+function emit(lv, lvIdx, val) {
+    console.log("emit: lv: ", lv, " lvIdx: ", lvIdx, " val: ", val);
+    events[lv][lvIdx] = val;
+}
+
 // simulating a Solidity library
 class HashTower {
     hash(arr) {
@@ -32,32 +38,40 @@ class HashTower {
         return !DEBUG_RANGE ? poseidon(arr) : [arr[0][0], arr[W - 1][1]];
     }
     add(self, item) {
-        const len = self.getLength();
-        const lvLengths = this.getLevelLengths(len);
+        const len = self.getLength(); // use the length before adding the item
+        const lvFullLengths = this.getLevelFullLengths(len);
 
         var toAdd = !DEBUG_RANGE ? BigInt(item) : [len, len]; // orig len == current idx
 
         for (let lv = 0; lv < H; lv++) {
-            const origLvLen = lvLengths[lv];
-            if (origLvLen < W) {
-                self.setBuf(lv, origLvLen, toAdd);
+            const lvLen = this.toPartialLength(lvFullLengths[lv]);
+            if (lvLen < W) {
+                self.setBuf(lv, lvLen, toAdd);
+                emit(lv, lvFullLengths[lv], toAdd);
                 break;
             } else {
                 const bufOfLv = Array.from({length: W}, (v, i) => self.getBuf(lv, i));
                 const hash = this.hash(bufOfLv);
                 self.setBuf(lv, 0, toAdd);
+                emit(lv, lvFullLengths[lv], toAdd);
                 toAdd = hash; // to be added in the upper level
             }
         }
         self.setLength(len + 1);
     }
+    toPartialLength(l) {
+        return l == 0 ? 0 : (l - 1) % W + 1;
+    }
     getLevelLengths(len) {
+        return this.getLevelFullLengths(len).map(this.toPartialLength);
+    }
+    getLevelFullLengths(len) {
         var lengths = [];
         var zeroIfLessThan = 0; // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
         var pow = 1; // pow = W^lv
         for (let lv = 0; lv < H; lv++) {
             zeroIfLessThan += pow;
-            const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) % W + 1;
+            const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) + 1;
             lengths.push(lvLen); // zero-terminated
             if (lvLen == 0) break;
             pow *= W; // shift
@@ -66,7 +80,7 @@ class HashTower {
     }
     // direct access without triggering profiling
     show(len, buf) {
-        console.clear();
+        //console.clear();
         var lvLengths = this.getLevelLengths(len);
         for (let lv = H - 1; lv >= 0; lv--) {
             var msg = "lv " + lv + "\t";
@@ -83,7 +97,8 @@ class HashTower {
         console.log("\n");
         console.log("length: " + len);
         console.log("profiling:", profiler.toString());
-        console.log("level lengths: " + lvLengths + ",...");
+        console.log("level lengths     : " + lvLengths + ",...");
+        console.log("level full lengths: " + this.getLevelFullLengths(len) + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
         const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
     }
@@ -103,6 +118,25 @@ class HashTower {
             pow *= W;
         }
         return undefined;
+    }
+    // simulate the circuit
+    verify(len, lvHashes, item, lists, indexes) {
+        const listHashes = Array.from({length: H}, (v, lv) => Poseidon(lists[lv]));
+
+        const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
+        const indexMatches = Array(H);
+        indexMatches[0] = lists[0][indexes[0]] == item && indexes[0] < lv0Len;
+        for (let lv = 1; lv < H; lv++) {
+            indexMatches[lv] = lists[lv][indexes[lv]] == listHashes[lv - 1];
+        }
+        const everyIndexMatches = indexMatches.every((v) => v);
+
+        const someLvEq = listHashes.some((v, lv) => v == lvHashes[lv]);
+
+        return everyIndexMatches && someLvEq;
+    }
+    generateMerkleProof(idx) {
+
     }
 }
 
