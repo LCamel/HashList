@@ -14,6 +14,8 @@ const W = 4;
 const H = 12;
 const DEBUG_RANGE = false;
 
+const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((a, b) => a[0] == b[0] && a[1] == b[1]);
+
 // simulating a Solidity storage struct
 class HashTowerData {
     constructor() {
@@ -136,7 +138,7 @@ class HashTower {
 
         const everyChildMatches = this.checkEveryChildMatches(childrens, indexes, item, chHashes);
 
-        const matchLevelMatches = chHashes[matchLevel] == lvHashes[matchLevel];
+        const matchLevelMatches = EQ(chHashes[matchLevel], lvHashes[matchLevel]);
 
         console.log("matching level children: ", childrens[matchLevel]);
         console.log("verify: lv0Safe: ", lv0Safe, " everyChildMatches: ", everyChildMatches, " matchLevelMatches: ", matchLevelMatches);
@@ -144,9 +146,9 @@ class HashTower {
     }
     checkEveryChildMatches(childrens, indexes, item, chHashes) {
         const childMatches = Array(H);
-        childMatches[0] = childrens[0][indexes[0]] == item;
+        childMatches[0] = EQ(childrens[0][indexes[0]], item);
         for (let lv = 1; lv < H; lv++) {
-            childMatches[lv] = childrens[lv][indexes[lv]] == chHashes[lv - 1];
+            childMatches[lv] = EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]);
         }
         const everyChildMatches = childMatches.every((v) => v);
         return everyChildMatches;
@@ -207,9 +209,10 @@ for (let i = 0; i < 10000000; i++) {
     ht.add(htd, item);
     ht.show(htd.length, htd.buf);
 
+
     const proof = ht.generateMerkleProof(10);
     if (proof) {
-        const OK = ht.loadAndVerify(htd, 10, ...proof);
+        const OK = ht.loadAndVerify(htd, !DEBUG_RANGE ? 10 : [10, 10], ...proof);
         console.log("OK: ", OK);
 
     }
