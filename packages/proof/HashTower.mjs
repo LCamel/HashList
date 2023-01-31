@@ -105,7 +105,8 @@ class HashTower {
         console.log("level full lengths: " + this.getLevelFullLengths(len) + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
         console.log("proof for idx 10: ");
-        this.generateMerkleProof(10).map((l) => console.log(JSON.stringify(l)));
+        this.generateMerkleProof(10);
+        //this.generateMerkleProof(10).map((l) => console.log(JSON.stringify(l)));
         const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
     }
     // only for proving
@@ -143,13 +144,17 @@ class HashTower {
     }
     generateMerkleProof(idx) {
         const lists = [];
+        const listIndexes = [];
+        const wrapper = !DEBUG_RANGE ? (v) => BigInt(v) : (v) => v;
         for (let lv = 0; lv < H; lv++) {
             const lvStart = idx - idx % W;
             const list = getEvents(lv, lvStart, lvStart + W);
             if (list[0] === undefined) break;
-            lists.push(list);
+            lists.push(Array.from({length: W}, (v, i) => wrapper(list[i] || 0)));
+            listIndexes.push(idx - lvStart);
+            console.log(listIndexes[listIndexes.length - 1], lists[lists.length - 1]);
             if (list[W - 1] === undefined) break;
-            idx /= W;
+            idx = Math.floor(idx / W);
         }
         return lists;
     }
