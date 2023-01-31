@@ -127,36 +127,37 @@ class HashTower {
         return undefined;
     }
     // simulate the circuit
-    verify(len, lvHashes, item, lists, indexes) {
-        const listHashes = Array.from({length: H}, (v, lv) => Poseidon(lists[lv]));
+    verify(len, lvHashes, item, childrens, indexes) {
+        const chHashes = Array.from({length: H}, (_, lv) => this.hash(childrens[lv]));
 
         const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
-        const indexMatches = Array(H);
-        indexMatches[0] = lists[0][indexes[0]] == item && indexes[0] < lv0Len;
+        const childMatches = Array(H);
+        childMatches[0] = childrens[0][indexes[0]] == item && indexes[0] < lv0Len;
         for (let lv = 1; lv < H; lv++) {
-            indexMatches[lv] = lists[lv][indexes[lv]] == listHashes[lv - 1];
+            childMatches[lv] = childrens[lv][indexes[lv]] == chHashes[lv - 1];
         }
-        const everyIndexMatches = indexMatches.every((v) => v);
+        const everyChildMatches = childMatches.every((v) => v);
 
-        const someLvEq = listHashes.some((v, lv) => v == lvHashes[lv]);
+        const someLevelEquals = chHashes.some((v, lv) => v == lvHashes[lv]);
 
-        return everyIndexMatches && someLvEq;
+        return everyChildMatches && someLevelEquals;
     }
+    // TODO: race condition ?
     generateMerkleProof(idx) {
-        const lists = [];
-        const listIndexes = [];
+        const childrens = [];
+        const indexes = [];
         const wrapper = !DEBUG_RANGE ? (v) => BigInt(v) : (v) => v;
         for (let lv = 0; lv < H; lv++) {
             const lvStart = idx - idx % W;
-            const list = getEvents(lv, lvStart, lvStart + W);
-            if (list[0] === undefined) break;
-            lists.push(Array.from({length: W}, (v, i) => wrapper(list[i] || 0)));
-            listIndexes.push(idx - lvStart);
-            console.log(listIndexes[listIndexes.length - 1], lists[lists.length - 1]);
-            if (list[W - 1] === undefined) break;
+            const events = getEvents(lv, lvStart, lvStart + W);
+            if (events[0] === undefined) break;
+            childrens.push(Array.from({length: W}, (_, i) => wrapper(events[i] || 0)));
+            indexes.push(idx - lvStart);
+            console.log(indexes[indexes.length - 1], childrens[childrens.length - 1]);
+            if (events[W - 1] === undefined) break;
             idx = Math.floor(idx / W);
         }
-        return lists;
+        return childrens;
     }
 }
 
