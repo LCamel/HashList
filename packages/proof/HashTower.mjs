@@ -128,20 +128,27 @@ class HashTower {
     }
     // simulate the circuit
     verify(len, lvHashes, item, childrens, indexes) {
+        const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
+        const lv0IndexIsValid = indexes[0] < lv0Len;
+
         const chHashes = Array.from({length: H}, (_, lv) => this.hash(childrens[lv]));
 
-        const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
+        const everyChildMatches = this.checkEveryChildMatches(childrens, indexes, item, chHashes);
+
+        const someLevelEquals = chHashes.some((v, lv) => v == lvHashes[lv]);
+
+        return lv0IndexIsValid && everyChildMatches && someLevelEquals;
+    }
+    checkEveryChildMatches(childrens, indexes, item, chHashes) {
         const childMatches = Array(H);
-        childMatches[0] = childrens[0][indexes[0]] == item && indexes[0] < lv0Len;
+        childMatches[0] = childrens[0][indexes[0]] == item;
         for (let lv = 1; lv < H; lv++) {
             childMatches[lv] = childrens[lv][indexes[lv]] == chHashes[lv - 1];
         }
         const everyChildMatches = childMatches.every((v) => v);
-
-        const someLevelEquals = chHashes.some((v, lv) => v == lvHashes[lv]);
-
-        return everyChildMatches && someLevelEquals;
+        return everyChildMatches;
     }
+
     // TODO: race condition ?
     generateMerkleProof(idx) {
         const childrens = [];
