@@ -12,7 +12,7 @@ const profiler = {
 // 4^0 + 4^1 + ... + 4^12 = 22369621,  4^0 + 4^1 + ... + 4^19 = 366503875925
 const W = 4;
 const H = 12;
-const DEBUG_RANGE = true;
+const DEBUG_RANGE = false;
 
 // simulating a Solidity storage struct
 class HashTowerData {
@@ -107,7 +107,7 @@ class HashTower {
         console.log("proof for idx 10: ");
         this.generateMerkleProof(10);
         //this.generateMerkleProof(10).map((l) => console.log(JSON.stringify(l)));
-        const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
+
     }
     // only for proving
     getPositions(idx, len) {
@@ -126,20 +126,21 @@ class HashTower {
         }
         return undefined;
     }
-    // simulate the circuit
-    verify(len, lvHashes, item, childrens, indexes) {
+    // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
+    verify(lv0Len, lvHashes, item, childrens, indexes, matchLevel) {
         // attacker can't aim at a tailing 0 above lv0
         // so we only check the lv0 case
-        const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
-        const lv0IndexIsValid = indexes[0] < lv0Len;
+        const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
 
         const chHashes = Array.from({length: H}, (_, lv) => this.hash(childrens[lv]));
 
         const everyChildMatches = this.checkEveryChildMatches(childrens, indexes, item, chHashes);
 
-        const someLevelEquals = chHashes.some((v, lv) => v == lvHashes[lv]);
+        const matchLevelMatches = chHashes[matchLevel] == lvHashes[matchLevel];
 
-        return lv0IndexIsValid && everyChildMatches && someLevelEquals;
+        console.log("matching level children: ", childrens[matchLevel]);
+        console.log("verify: lv0Safe: ", lv0Safe, " everyChildMatches: ", everyChildMatches, " matchLevelMatches: ", matchLevelMatches);
+        return lv0Safe && everyChildMatches && matchLevelMatches;
     }
     checkEveryChildMatches(childrens, indexes, item, chHashes) {
         const childMatches = Array(H);
@@ -149,6 +150,20 @@ class HashTower {
         }
         const everyChildMatches = childMatches.every((v) => v);
         return everyChildMatches;
+    }
+    // simulate the contract
+    loadAndVerify(self, item, childrens, indexes, matchLevel) {
+        // const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
+        const len = self.getLength();
+        if (len == 0) return false;
+        const lvLengths = this.getLevelLengths(len);
+        const wrapper = !DEBUG_RANGE ? (v) => BigInt(v || 0) : (v) => v || [0, 0];
+        const lvHashes = Array(H);
+        for (let lv = 0; lv < H; lv++) {
+            const levelBuf = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : wrapper(undefined));
+            lvHashes[lv] = this.hash(levelBuf);
+        }
+        return this.verify(lvLengths[0], lvHashes, item, childrens, indexes, matchLevel);
     }
 
     // TODO: race condition ?
@@ -167,6 +182,7 @@ class HashTower {
             idx = Math.floor(idx / W);
         }
         if (childrens.length == 0) return undefined;
+        const matchLevel = childrens.length - 1;
 
         for (let lv = childrens.length; lv < H; lv++) {
             childrens.push(Array.from({length: W},
@@ -174,10 +190,11 @@ class HashTower {
             indexes.push(0);
         }
 
-        for (let lv = H - 1; lv >= 0; lv--) {
-            console.log(lv, "\t", indexes[lv], "\t", childrens[lv]);
-        }
-        return childrens;
+        //for (let lv = H - 1; lv >= 0; lv--) {
+        //    console.log(lv, "\t", indexes[lv], "\t", childrens[lv]);
+        //}
+
+        return [childrens, indexes, matchLevel];
     }
 }
 
@@ -186,7 +203,17 @@ const htd = new HashTowerData();
 const ht = new HashTower();
 ht.show(htd.length, htd.buf);
 for (let i = 0; i < 10000000; i++) {
-    ht.add(htd, i);
+    const item = i;
+    ht.add(htd, item);
     ht.show(htd.length, htd.buf);
+
+    const proof = ht.generateMerkleProof(10);
+    if (proof) {
+        const OK = ht.loadAndVerify(htd, 10, ...proof);
+        console.log("OK: ", OK);
+
+    }
+
+    const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
 }
 ht.show(htd.length, htd.buf);
