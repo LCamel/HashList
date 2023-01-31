@@ -39,7 +39,7 @@ function getEvents(lv, start, end) {
 class HashTower {
     hash(arr) {
         profiler.h();
-        return !DEBUG_RANGE ? poseidon(arr) : [arr[0][0], arr[W - 1][1]];
+        return !DEBUG_RANGE ? poseidon(arr) : [arr[0][0], Math.max(...arr.map((v) => v[1]))];
     }
     add(self, item) {
         const len = self.getLength(); // use the length before adding the item
@@ -155,17 +155,27 @@ class HashTower {
     generateMerkleProof(idx) {
         const childrens = [];
         const indexes = [];
-        const wrapper = !DEBUG_RANGE ? (v) => BigInt(v) : (v) => v;
+        const wrapper = !DEBUG_RANGE ? (v) => BigInt(v || 0) : (v) => v || [0, 0];
         for (let lv = 0; lv < H; lv++) {
             const lvStart = idx - idx % W;
             const lvIdx = idx - lvStart;
             const events = getEvents(lv, lvStart, lvStart + W);
-            if (events[lvIdx] === undefined) break; // lv0
-            childrens.push(Array.from({length: W}, (_, i) => wrapper(events[i] || 0)));
+            if (events[lvIdx] === undefined) break;
+            childrens.push(Array.from({length: W}, (_, i) => wrapper(events[i])));
             indexes.push(lvIdx);
-            console.log(indexes[indexes.length - 1], childrens[childrens.length - 1]);
             if (events[W - 1] === undefined) break;
             idx = Math.floor(idx / W);
+        }
+        if (childrens.length == 0) return undefined;
+
+        for (let lv = childrens.length; lv < H; lv++) {
+            childrens.push(Array.from({length: W},
+                (_, i) => i == 0 ? this.hash(childrens[lv - 1]) : wrapper(undefined)));
+            indexes.push(0);
+        }
+
+        for (let lv = H - 1; lv >= 0; lv--) {
+            console.log(lv, "\t", indexes[lv], "\t", childrens[lv]);
         }
         return childrens;
     }
