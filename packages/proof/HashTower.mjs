@@ -128,6 +128,8 @@ class HashTower {
     }
     // simulate the circuit
     verify(len, lvHashes, item, childrens, indexes) {
+        // attacker can't aim at a tailing 0 above lv0
+        // so we only check the lv0 case
         const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
         const lv0IndexIsValid = indexes[0] < lv0Len;
 
@@ -156,10 +158,11 @@ class HashTower {
         const wrapper = !DEBUG_RANGE ? (v) => BigInt(v) : (v) => v;
         for (let lv = 0; lv < H; lv++) {
             const lvStart = idx - idx % W;
+            const lvIdx = idx - lvStart;
             const events = getEvents(lv, lvStart, lvStart + W);
-            if (events[0] === undefined) break;
+            if (events[lvIdx] === undefined) break; // lv0
             childrens.push(Array.from({length: W}, (_, i) => wrapper(events[i] || 0)));
-            indexes.push(idx - lvStart);
+            indexes.push(lvIdx);
             console.log(indexes[indexes.length - 1], childrens[childrens.length - 1]);
             if (events[W - 1] === undefined) break;
             idx = Math.floor(idx / W);
