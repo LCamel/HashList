@@ -84,28 +84,6 @@ class HashTower {
         }
         self.setLength(len + 1);
     }
-    // direct access without triggering profiling
-    show(len, buf) {
-        console.clear();
-        var lvLengths = getLevelLengths(len);
-        for (let lv = H - 1; lv >= 0; lv--) {
-            var msg = "lv " + lv + "\t";
-            for (let i = 0; i < W; i++) {
-                const s = "" + buf[lv][i];
-                msg += s.length > 20
-                    ? s.substring(0, 17) + "..."
-                    : s.padStart(20, " ");
-                msg += (i == lvLengths[lv] - 1) ? " ↵  " + "\x1b[90m" : "    "; // ↵
-            }
-            msg += "\x1b[0m";
-            console.log(msg);
-        }
-        console.log("\n");
-        console.log("length: " + len);
-        console.log("profiling:", profiler.toString());
-        console.log("level lengths     : " + lvLengths + ",...");
-        console.log("level full lengths: " + getLevelFullLengths(len) + ",...");
-    }
     // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
     // you can claim that childrens[0][indexes[0]] belongs to the original item list
     verify(lv0Len, lvHashes, childrens, indexes, matchLevel) {
@@ -169,14 +147,36 @@ class HashTower {
     }
 }
 
+// direct access without triggering profiling
+function show(len, buf) {
+    console.clear();
+    var lvLengths = getLevelLengths(len);
+    for (let lv = H - 1; lv >= 0; lv--) {
+        var msg = "lv " + lv + "\t";
+        for (let i = 0; i < W; i++) {
+            const s = "" + buf[lv][i];
+            msg += s.length > 20
+                ? s.substring(0, 17) + "..."
+                : s.padStart(20, " ");
+            msg += (i == lvLengths[lv] - 1) ? " ↵  " + "\x1b[90m" : "    "; // ↵
+        }
+        msg += "\x1b[0m";
+        console.log(msg);
+    }
+    console.log("\n");
+    console.log("length: " + len);
+    console.log("profiling:", profiler.toString());
+    console.log("level lengths     : " + lvLengths + ",...");
+    console.log("level full lengths: " + getLevelFullLengths(len) + ",...");
+}
 
 const htd = new HashTowerData();
 const ht = new HashTower();
-ht.show(htd.length, htd.buf);
+show(htd.length, htd.buf);
 for (let i = 0; i < 10000000; i++) {
     const item = !DEBUG_RANGE ? BigInt(i) : [i, i];
     ht.add(htd, item);
-    ht.show(htd.length, htd.buf);
+    show(htd.length, htd.buf);
 
     console.log("proof for idx 10: ");
     const proof = ht.generateMerkleProof(10);
