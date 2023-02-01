@@ -16,6 +16,7 @@ const H = 12;
 const DEBUG_RANGE = false;
 
 const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((a, b) => a[0] == b[0] && a[1] == b[1]);
+const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
 
 // simulating a Solidity storage struct
 class HashTowerData {
@@ -155,10 +156,9 @@ class HashTower {
         const len = self.getLength();
         if (len == 0) return false;
         const lvLengths = this.getLevelLengths(len);
-        const wrapper = !DEBUG_RANGE ? (v) => BigInt(v || 0) : (v) => v || [0, 0];
         const lvHashes = Array(H);
         for (let lv = 0; lv < H; lv++) {
-            const levelBuf = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : wrapper(undefined));
+            const levelBuf = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : ZERO);
             lvHashes[lv] = this.hash(levelBuf);
         }
         return this.verify(lvLengths[0], lvHashes, childrens, indexes, matchLevel);
@@ -168,13 +168,12 @@ class HashTower {
     generateMerkleProof(idx) {
         const childrens = [];
         const indexes = [];
-        const wrapper = !DEBUG_RANGE ? (v) => BigInt(v || 0) : (v) => v || [0, 0];
         for (let lv = 0; lv < H; lv++) {
             const lvStart = idx - idx % W;
             const lvIdx = idx - lvStart;
             const events = getEvents(lv, lvStart, lvStart + W);
             if (events[lvIdx] === undefined) break;
-            childrens.push(Array.from({length: W}, (_, i) => wrapper(events[i])));
+            childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
             indexes.push(lvIdx);
             if (events[W - 1] === undefined) break;
             idx = Math.floor(idx / W);
@@ -183,8 +182,7 @@ class HashTower {
         const matchLevel = childrens.length - 1;
 
         for (let lv = childrens.length; lv < H; lv++) {
-            childrens.push(Array.from({length: W},
-                (_, i) => i == 0 ? this.hash(childrens[lv - 1]) : wrapper(undefined)));
+            childrens.push(Array.from({length: W}, (_, i) => i == 0 ? this.hash(childrens[lv - 1]) : ZERO));
             indexes.push(0);
         }
 
