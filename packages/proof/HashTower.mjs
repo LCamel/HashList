@@ -17,6 +17,7 @@ const DEBUG_RANGE = false;
 
 const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((a, b) => a[0] == b[0] && a[1] == b[1]);
 const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
+const HASH = !DEBUG_RANGE ? poseidon : (arr) => [arr[0][0], Math.max(...arr.map((v) => v[1]))];
 
 function getLevelFullLengths(len) {
     var lengths = [];
@@ -61,10 +62,6 @@ function getEvents(lv, start, end) {
 
 // simulating a Solidity library
 class HashTower {
-    hash(arr) {
-        profiler.h();
-        return !DEBUG_RANGE ? poseidon(arr) : [arr[0][0], Math.max(...arr.map((v) => v[1]))];
-    }
     add(self, item) {
         const len = self.getLength(); // use the length before adding the item
         const lvFullLengths = getLevelFullLengths(len);
@@ -76,7 +73,7 @@ class HashTower {
                 emit(lv, lvFullLengths[lv], toAdd);
                 break;
             } else {
-                const lvHash = this.hash(Array.from({length: W}, (v, i) => self.getBuf(lv, i)));
+                const lvHash = HASH(Array.from({length: W}, (v, i) => self.getBuf(lv, i))); profiler.h();
                 self.setBuf(lv, 0, toAdd); // add it in the just-emptied level
                 emit(lv, lvFullLengths[lv], toAdd);
                 toAdd = lvHash;            // to be added in the upper level
@@ -91,7 +88,7 @@ class HashTower {
         // so we only check the lv0 case
         const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
 
-        const chHashes = Array.from({length: H}, (_, lv) => this.hash(childrens[lv]));
+        const chHashes = Array.from({length: H}, (_, lv) => HASH(childrens[lv]));
 
         const everyChildMatches = Array.from({length: H}, (_, lv) =>
             lv == 0 ? true : EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]))
@@ -112,7 +109,7 @@ class HashTower {
         const lvHashes = Array(H);
         for (let lv = 0; lv < H; lv++) {
             const levelBuf = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : ZERO);
-            lvHashes[lv] = this.hash(levelBuf);
+            lvHashes[lv] = HASH(levelBuf);
         }
         return this.verify(lvLengths[0], lvHashes, childrens, indexes, matchLevel);
     }
@@ -135,7 +132,7 @@ class HashTower {
         const matchLevel = childrens.length - 1;
 
         for (let lv = childrens.length; lv < H; lv++) {
-            childrens.push(Array.from({length: W}, (_, i) => i == 0 ? this.hash(childrens[lv - 1]) : ZERO));
+            childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
             indexes.push(0);
         }
 
@@ -189,3 +186,5 @@ for (let i = 0; i < 10000000; i++) {
     const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
 }
 ht.show(htd.length, htd.buf);
+
+// TODO: hash / read profiling
