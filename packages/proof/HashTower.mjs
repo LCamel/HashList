@@ -14,10 +14,9 @@ const profiler = {
 const W = 4;
 const H = 12;
 const DEBUG_RANGE = false;
-
-const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((a, b) => a[0] == b[0] && a[1] == b[1]);
+const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((ra, rb) => ra[0] == rb[0] && ra[1] == rb[1]);
 const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
-const HASH = !DEBUG_RANGE ? poseidon : (arr) => [arr[0][0], Math.max(...arr.map((v) => v[1]))];
+const HASH = !DEBUG_RANGE ? poseidon : (ranges) => [ranges[0][0], Math.max(...ranges.map((r) => r[1]))];
 
 function getLevelFullLengths(len) {
     var lengths = [];
