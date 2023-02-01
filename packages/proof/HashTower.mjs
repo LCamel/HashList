@@ -107,7 +107,6 @@ class HashTower {
         console.log("level lengths     : " + lvLengths + ",...");
         console.log("level full lengths: " + this.getLevelFullLengths(len) + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
-        console.log("proof for idx 10: ");
     }
     // only for proving
     getPositions(idx, len) {
@@ -127,8 +126,9 @@ class HashTower {
         return undefined;
     }
     // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
+    // you can claim that childrens[0][indexes[0]] belongs to the original item list
     verify(lv0Len, lvHashes, childrens, indexes, matchLevel) {
-        // attacker can't aim at a tailing 0 above lv0
+        // attackers can't aim at a tailing 0 above lv0
         // so we only check the lv0 case
         const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
 
@@ -138,8 +138,8 @@ class HashTower {
 
         const matchLevelMatches = EQ(chHashes[matchLevel], lvHashes[matchLevel]);
 
+        console.log("verify: ", { lv0Safe, everyChildMatches, matchLevelMatches });
         console.log("matching level children: ", childrens[matchLevel]);
-        console.log("verify: lv0Safe: ", lv0Safe, " everyChildMatches: ", everyChildMatches, " matchLevelMatches: ", matchLevelMatches);
         return lv0Safe && everyChildMatches && matchLevelMatches;
     }
     checkEveryChildMatches(childrens, indexes, chHashes) {
@@ -207,7 +207,7 @@ for (let i = 0; i < 10000000; i++) {
     ht.add(htd, item);
     ht.show(htd.length, htd.buf);
 
-
+    console.log("proof for idx 10: ");
     const proof = ht.generateMerkleProof(10);
     if (proof) {
         const OK = ht.loadAndVerify(htd, ...proof);
