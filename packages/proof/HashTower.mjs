@@ -133,22 +133,15 @@ class HashTower {
 
         const chHashes = Array.from({length: H}, (_, lv) => this.hash(childrens[lv]));
 
-        const everyChildMatches = this.checkEveryChildMatches(childrens, indexes, chHashes);
+        const everyChildMatches = Array.from({length: H}, (_, lv) =>
+            lv == 0 ? true : EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]))
+            .every((v) => v);
 
         const matchLevelMatches = EQ(chHashes[matchLevel], lvHashes[matchLevel]);
 
         console.log("verify: ", { lv0Safe, everyChildMatches, matchLevelMatches });
         console.log("matching level children: ", childrens[matchLevel]);
         return lv0Safe && everyChildMatches && matchLevelMatches;
-    }
-    checkEveryChildMatches(childrens, indexes, chHashes) {
-        const childMatches = Array(H);
-        childMatches[0] = true;
-        for (let lv = 1; lv < H; lv++) {
-            childMatches[lv] = EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]);
-        }
-        const everyChildMatches = childMatches.every((v) => v);
-        return everyChildMatches;
     }
     // simulate the contract
     loadAndVerify(self, childrens, indexes, matchLevel) {
