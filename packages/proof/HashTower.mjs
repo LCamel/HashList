@@ -18,6 +18,26 @@ const DEBUG_RANGE = false;
 const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((a, b) => a[0] == b[0] && a[1] == b[1]);
 const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
 
+function getLevelFullLengths(len) {
+    var lengths = [];
+    var zeroIfLessThan = 0; // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
+    var pow = 1; // pow = W^lv
+    for (let lv = 0; lv < H; lv++) {
+        zeroIfLessThan += pow;
+        const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) + 1;
+        lengths.push(lvLen); // zero-terminated
+        if (lvLen == 0) break;
+        pow *= W; // shift
+    }
+    return lengths;
+}
+function toPartialLength(lvLen) {
+    return lvLen == 0 ? 0 : (lvLen - 1) % W + 1;
+}
+function getLevelLengths(len) {
+    return getLevelFullLengths(len).map(toPartialLength);
+}
+
 // simulating a Solidity storage struct
 class HashTowerData {
     constructor() {
@@ -47,10 +67,10 @@ class HashTower {
     }
     add(self, item) {
         const len = self.getLength(); // use the length before adding the item
-        const lvFullLengths = this.getLevelFullLengths(len);
+        const lvFullLengths = getLevelFullLengths(len);
         var toAdd = item; // BigInt or [start, end]
         for (let lv = 0; lv < H; lv++) {
-            const lvLen = this.toPartialLength(lvFullLengths[lv]);
+            const lvLen = toPartialLength(lvFullLengths[lv]);
             if (lvLen < W) {
                 self.setBuf(lv, lvLen, toAdd);
                 emit(lv, lvFullLengths[lv], toAdd);
@@ -64,29 +84,10 @@ class HashTower {
         }
         self.setLength(len + 1);
     }
-    toPartialLength(l) {
-        return l == 0 ? 0 : (l - 1) % W + 1;
-    }
-    getLevelLengths(len) {
-        return this.getLevelFullLengths(len).map(this.toPartialLength);
-    }
-    getLevelFullLengths(len) {
-        var lengths = [];
-        var zeroIfLessThan = 0; // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
-        var pow = 1; // pow = W^lv
-        for (let lv = 0; lv < H; lv++) {
-            zeroIfLessThan += pow;
-            const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) + 1;
-            lengths.push(lvLen); // zero-terminated
-            if (lvLen == 0) break;
-            pow *= W; // shift
-        }
-        return lengths;
-    }
     // direct access without triggering profiling
     show(len, buf) {
         console.clear();
-        var lvLengths = this.getLevelLengths(len);
+        var lvLengths = getLevelLengths(len);
         for (let lv = H - 1; lv >= 0; lv--) {
             var msg = "lv " + lv + "\t";
             for (let i = 0; i < W; i++) {
@@ -103,7 +104,7 @@ class HashTower {
         console.log("length: " + len);
         console.log("profiling:", profiler.toString());
         console.log("level lengths     : " + lvLengths + ",...");
-        console.log("level full lengths: " + this.getLevelFullLengths(len) + ",...");
+        console.log("level full lengths: " + getLevelFullLengths(len) + ",...");
     }
     // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
     // you can claim that childrens[0][indexes[0]] belongs to the original item list
@@ -129,7 +130,7 @@ class HashTower {
         // const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
         const len = self.getLength();
         if (len == 0) return false;
-        const lvLengths = this.getLevelLengths(len);
+        const lvLengths = getLevelLengths(len);
         const lvHashes = Array(H);
         for (let lv = 0; lv < H; lv++) {
             const levelBuf = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : ZERO);
