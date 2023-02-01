@@ -47,9 +47,7 @@ class HashTower {
     add(self, item) {
         const len = self.getLength(); // use the length before adding the item
         const lvFullLengths = this.getLevelFullLengths(len);
-
-        var toAdd = !DEBUG_RANGE ? BigInt(item) : [len, len]; // orig len == current idx
-
+        var toAdd = item; // BigInt or [start, end]
         for (let lv = 0; lv < H; lv++) {
             const lvLen = this.toPartialLength(lvFullLengths[lv]);
             if (lvLen < W) {
@@ -203,7 +201,7 @@ const htd = new HashTowerData();
 const ht = new HashTower();
 ht.show(htd.length, htd.buf);
 for (let i = 0; i < 10000000; i++) {
-    const item = i;
+    const item = !DEBUG_RANGE ? BigInt(i) : [i, i];
     ht.add(htd, item);
     ht.show(htd.length, htd.buf);
 
