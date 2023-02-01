@@ -105,24 +105,6 @@ class HashTower {
         console.log("profiling:", profiler.toString());
         console.log("level lengths     : " + lvLengths + ",...");
         console.log("level full lengths: " + this.getLevelFullLengths(len) + ",...");
-        console.log("getPositions(0): ", ht.getPositions(0, len));
-    }
-    // only for proving
-    getPositions(idx, len) {
-        if (idx < 0 || idx >= len) return undefined;
-        const lvLengths = this.getLevelLengths(len);
-        var start = len;
-        var pow = 1;
-        for (let lv = 0; lv < H; lv++) {
-            for (let lvIdx = lvLengths[lv] - 1; lvIdx >= 0; lvIdx--) {
-                start -= pow;
-                if (start <= idx) {
-                    return [lv, lvIdx, start, pow];
-                }
-            }
-            pow *= W;
-        }
-        return undefined;
     }
     // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
     // you can claim that childrens[0][indexes[0]] belongs to the original item list
