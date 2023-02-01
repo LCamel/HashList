@@ -108,9 +108,6 @@ class HashTower {
         console.log("level full lengths: " + this.getLevelFullLengths(len) + ",...");
         console.log("getPositions(0): ", ht.getPositions(0, len));
         console.log("proof for idx 10: ");
-        this.generateMerkleProof(10);
-        //this.generateMerkleProof(10).map((l) => console.log(JSON.stringify(l)));
-
     }
     // only for proving
     getPositions(idx, len) {
@@ -130,14 +127,14 @@ class HashTower {
         return undefined;
     }
     // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
-    verify(lv0Len, lvHashes, item, childrens, indexes, matchLevel) {
+    verify(lv0Len, lvHashes, childrens, indexes, matchLevel) {
         // attacker can't aim at a tailing 0 above lv0
         // so we only check the lv0 case
         const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
 
         const chHashes = Array.from({length: H}, (_, lv) => this.hash(childrens[lv]));
 
-        const everyChildMatches = this.checkEveryChildMatches(childrens, indexes, item, chHashes);
+        const everyChildMatches = this.checkEveryChildMatches(childrens, indexes, chHashes);
 
         const matchLevelMatches = EQ(chHashes[matchLevel], lvHashes[matchLevel]);
 
@@ -145,9 +142,9 @@ class HashTower {
         console.log("verify: lv0Safe: ", lv0Safe, " everyChildMatches: ", everyChildMatches, " matchLevelMatches: ", matchLevelMatches);
         return lv0Safe && everyChildMatches && matchLevelMatches;
     }
-    checkEveryChildMatches(childrens, indexes, item, chHashes) {
+    checkEveryChildMatches(childrens, indexes, chHashes) {
         const childMatches = Array(H);
-        childMatches[0] = EQ(childrens[0][indexes[0]], item);
+        childMatches[0] = true;
         for (let lv = 1; lv < H; lv++) {
             childMatches[lv] = EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]);
         }
@@ -155,7 +152,7 @@ class HashTower {
         return everyChildMatches;
     }
     // simulate the contract
-    loadAndVerify(self, item, childrens, indexes, matchLevel) {
+    loadAndVerify(self, childrens, indexes, matchLevel) {
         // const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
         const len = self.getLength();
         if (len == 0) return false;
@@ -166,7 +163,7 @@ class HashTower {
             const levelBuf = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : wrapper(undefined));
             lvHashes[lv] = this.hash(levelBuf);
         }
-        return this.verify(lvLengths[0], lvHashes, item, childrens, indexes, matchLevel);
+        return this.verify(lvLengths[0], lvHashes, childrens, indexes, matchLevel);
     }
 
     // TODO: race condition ?
@@ -213,7 +210,7 @@ for (let i = 0; i < 10000000; i++) {
 
     const proof = ht.generateMerkleProof(10);
     if (proof) {
-        const OK = ht.loadAndVerify(htd, !DEBUG_RANGE ? 10 : [10, 10], ...proof);
+        const OK = ht.loadAndVerify(htd, ...proof);
         console.log("OK: ", OK);
 
     }
