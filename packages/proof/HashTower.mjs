@@ -56,11 +56,10 @@ class HashTower {
                 emit(lv, lvFullLengths[lv], toAdd);
                 break;
             } else {
-                const bufOfLv = Array.from({length: W}, (v, i) => self.getBuf(lv, i));
-                const hash = this.hash(bufOfLv);
-                self.setBuf(lv, 0, toAdd);
+                const lvHash = this.hash(Array.from({length: W}, (v, i) => self.getBuf(lv, i)));
+                self.setBuf(lv, 0, toAdd); // add it in the just-emptied level
                 emit(lv, lvFullLengths[lv], toAdd);
-                toAdd = hash; // to be added in the upper level
+                toAdd = lvHash;            // to be added in the upper level
             }
         }
         self.setLength(len + 1);
