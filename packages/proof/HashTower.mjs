@@ -115,18 +115,19 @@ class HashTower {
 }
 
 // TODO: race condition ?
-function generateMerkleProof(idx) {
+function generateMerkleProofFromEvents(itemIdx) {
     const childrens = [];
     const indexes = [];
+    var lvIdx = itemIdx;
     for (let lv = 0; lv < H; lv++) {
-        const lvStart = idx - idx % W;
-        const lvIdx = idx - lvStart;
-        const events = getEvents(lv, lvStart, lvStart + W);
-        if (events[lvIdx] === undefined) break;
+        const chStart = lvIdx - lvIdx % W;
+        const chIdx = lvIdx - chStart;
+        const events = getEvents(lv, chStart, chStart + W);
+        if (events[chIdx] === undefined) break;
         childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
-        indexes.push(lvIdx);
+        indexes.push(chIdx);
         if (events[W - 1] === undefined) break;
-        idx = Math.floor(idx / W);
+        lvIdx = Math.floor(lvIdx / W);
     }
     if (childrens.length == 0) return undefined;
     const matchLevel = childrens.length - 1;
@@ -135,11 +136,6 @@ function generateMerkleProof(idx) {
         childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
         indexes.push(0);
     }
-
-    //for (let lv = H - 1; lv >= 0; lv--) {
-    //    console.log(lv, "\t", indexes[lv], "\t", childrens[lv]);
-    //}
-
     return [childrens, indexes, matchLevel];
 }
 
@@ -175,7 +171,7 @@ for (let i = 0; i < 10000000; i++) {
     show(htd.length, htd.buf);
 
     console.log("proof for idx 10: ");
-    const proof = generateMerkleProof(10);
+    const proof = generateMerkleProofFromEvents(10);
     if (proof) {
         const OK = ht.loadAndVerify(htd, ...proof);
         console.log("OK: ", OK);
