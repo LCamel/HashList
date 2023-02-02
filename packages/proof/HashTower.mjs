@@ -112,35 +112,35 @@ class HashTower {
         }
         return this.verify(lvLengths[0], lvHashes, childrens, indexes, matchLevel);
     }
+}
 
-    // TODO: race condition ?
-    generateMerkleProof(idx) {
-        const childrens = [];
-        const indexes = [];
-        for (let lv = 0; lv < H; lv++) {
-            const lvStart = idx - idx % W;
-            const lvIdx = idx - lvStart;
-            const events = getEvents(lv, lvStart, lvStart + W);
-            if (events[lvIdx] === undefined) break;
-            childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
-            indexes.push(lvIdx);
-            if (events[W - 1] === undefined) break;
-            idx = Math.floor(idx / W);
-        }
-        if (childrens.length == 0) return undefined;
-        const matchLevel = childrens.length - 1;
-
-        for (let lv = childrens.length; lv < H; lv++) {
-            childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
-            indexes.push(0);
-        }
-
-        //for (let lv = H - 1; lv >= 0; lv--) {
-        //    console.log(lv, "\t", indexes[lv], "\t", childrens[lv]);
-        //}
-
-        return [childrens, indexes, matchLevel];
+// TODO: race condition ?
+function generateMerkleProof(idx) {
+    const childrens = [];
+    const indexes = [];
+    for (let lv = 0; lv < H; lv++) {
+        const lvStart = idx - idx % W;
+        const lvIdx = idx - lvStart;
+        const events = getEvents(lv, lvStart, lvStart + W);
+        if (events[lvIdx] === undefined) break;
+        childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
+        indexes.push(lvIdx);
+        if (events[W - 1] === undefined) break;
+        idx = Math.floor(idx / W);
     }
+    if (childrens.length == 0) return undefined;
+    const matchLevel = childrens.length - 1;
+
+    for (let lv = childrens.length; lv < H; lv++) {
+        childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
+        indexes.push(0);
+    }
+
+    //for (let lv = H - 1; lv >= 0; lv--) {
+    //    console.log(lv, "\t", indexes[lv], "\t", childrens[lv]);
+    //}
+
+    return [childrens, indexes, matchLevel];
 }
 
 // direct access without triggering profiling
@@ -175,7 +175,7 @@ for (let i = 0; i < 10000000; i++) {
     show(htd.length, htd.buf);
 
     console.log("proof for idx 10: ");
-    const proof = ht.generateMerkleProof(10);
+    const proof = generateMerkleProof(10);
     if (proof) {
         const OK = ht.loadAndVerify(htd, ...proof);
         console.log("OK: ", OK);
