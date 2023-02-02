@@ -38,6 +38,26 @@ function getLevelLengths(len) {
     return getLevelFullLengths(len).map(toPartialLength);
 }
 
+// simulate the circuit.
+// you can claim that childrens[0][indexes[0]] belongs to the original item list
+function verify(lv0Len, buf, childrens, indexes, matchLevel) {
+    // attackers can't aim at a tailing 0 above lv0
+    // so we only check the lv0 case
+    const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
+
+    const chHashes = Array.from({length: H}, (_, lv) => HASH(childrens[lv]));
+
+    const everyChildMatches = Array.from({length: H}, (_, lv) =>
+        lv == 0 ? true : EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]))
+        .every((v) => v);
+
+    const matchLevelMatches = EQ(childrens[matchLevel][indexes[matchLevel]], buf[matchLevel][indexes[matchLevel]]);
+
+    console.log("verify: ", { lv0Safe, everyChildMatches, matchLevelMatches });
+    console.log("matching level children: ", childrens[matchLevel]);
+    return lv0Safe && everyChildMatches && matchLevelMatches;
+}
+
 // simulating a Solidity storage struct
 class HashTowerData {
     constructor() {
@@ -80,26 +100,6 @@ class HashTower {
         }
         self.setLength(len + 1);
     }
-    // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
-    // you can claim that childrens[0][indexes[0]] belongs to the original item list
-    verify(lv0Len, buf, childrens, indexes, matchLevel) {
-        // attackers can't aim at a tailing 0 above lv0
-        // so we only check the lv0 case
-        const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
-
-        const chHashes = Array.from({length: H}, (_, lv) => HASH(childrens[lv]));
-
-        const everyChildMatches = Array.from({length: H}, (_, lv) =>
-            lv == 0 ? true : EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]))
-            .every((v) => v);
-
-        const matchLevelMatches = EQ(childrens[matchLevel][indexes[matchLevel]], buf[matchLevel][indexes[matchLevel]]);
-
-        console.log("verify: ", { lv0Safe, everyChildMatches, matchLevelMatches });
-        console.log("matching level children: ", childrens[matchLevel]);
-        return lv0Safe && everyChildMatches && matchLevelMatches;
-    }
-    // simulate the contract
     loadAndVerify(self, childrens, indexes, matchLevel) {
         const len = self.getLength();
         if (len == 0) return false;
@@ -108,7 +108,7 @@ class HashTower {
         for (let lv = 0; lv < H; lv++) {
             buf[lv] = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : ZERO);
         }
-        return this.verify(lvLengths[0], buf, childrens, indexes, matchLevel);
+        return verify(lvLengths[0], buf, childrens, indexes, matchLevel);
     }
 }
 
