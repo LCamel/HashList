@@ -82,7 +82,7 @@ class HashTower {
     }
     // simulate the circuit. only lv0Len and lvHashes are given by the verifier (public)
     // you can claim that childrens[0][indexes[0]] belongs to the original item list
-    verify(lv0Len, lvHashes, childrens, indexes, matchLevel) {
+    verify(lv0Len, buf, childrens, indexes, matchLevel) {
         // attackers can't aim at a tailing 0 above lv0
         // so we only check the lv0 case
         const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
@@ -93,7 +93,7 @@ class HashTower {
             lv == 0 ? true : EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]))
             .every((v) => v);
 
-        const matchLevelMatches = EQ(chHashes[matchLevel], lvHashes[matchLevel]);
+        const matchLevelMatches = EQ(childrens[matchLevel][indexes[matchLevel]], buf[matchLevel][indexes[matchLevel]]);
 
         console.log("verify: ", { lv0Safe, everyChildMatches, matchLevelMatches });
         console.log("matching level children: ", childrens[matchLevel]);
@@ -101,16 +101,14 @@ class HashTower {
     }
     // simulate the contract
     loadAndVerify(self, childrens, indexes, matchLevel) {
-        // const lv0Len = (len == 0) ? 0 : (len - 1) % W + 1;
         const len = self.getLength();
         if (len == 0) return false;
         const lvLengths = getLevelLengths(len);
-        const lvHashes = Array(H);
+        const buf = Array(H);
         for (let lv = 0; lv < H; lv++) {
-            const levelBuf = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : ZERO);
-            lvHashes[lv] = HASH(levelBuf);
+            buf[lv] = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : ZERO);
         }
-        return this.verify(lvLengths[0], lvHashes, childrens, indexes, matchLevel);
+        return this.verify(lvLengths[0], buf, childrens, indexes, matchLevel);
     }
 }
 
