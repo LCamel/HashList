@@ -99,7 +99,7 @@ class HashTower { // library HashTower
         }
         self.setLength(len + 1);
     }
-    loadAndVerify(self, childrens, indexes, matchLevel) {
+    prove(self, childrens, indexes, matchLevel) {
         const len = self.getLength();
         if (len == 0) return false;
         const lvLengths = getLevelLengths(len);
@@ -173,7 +173,7 @@ for (let i = 0; i < 1000000; i++) {
     console.log("proof for idx 10: ");
     const proof = generateMerkleProofFromEvents(10);
     if (proof) {
-        console.log("loadAndVerify: ", ht.loadAndVerify(htd, ...proof));
+        console.log("prove: ", ht.prove(htd, ...proof));
     }
 }
 
