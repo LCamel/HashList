@@ -37,13 +37,13 @@ function verify(lv0Len, buf, childrens, indexes, matchLevel) {
     // attackers can't aim at a tailing 0 hash above lv0, so we only check the lv0 case
     const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
 
-    const chHashes = Array.from({length: H}, (_, lv) => HASH(childrens[lv]));
+    const chHashes = childrens.map(HASH);
 
-    const isMerkleProof = Array.from({length: H}, (_, lv) =>
-        lv == 0 ? true : EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]))
-        .every((v) => v);
+    const isMerkleProof = childrens.every((children, lv) =>
+        lv == 0 ? true : EQ(children[indexes[lv]], chHashes[lv - 1]));
 
-    const rootMatches = EQ(childrens[matchLevel][indexes[matchLevel]], buf[matchLevel][indexes[matchLevel]]);
+    const rootMatches = EQ(childrens[matchLevel][indexes[matchLevel]],
+                                 buf[matchLevel][indexes[matchLevel]]);
 
     console.log("verify: ", { lv0Safe, isMerkleProof, rootMatches });
     console.log("matching level children: ", childrens[matchLevel]);
