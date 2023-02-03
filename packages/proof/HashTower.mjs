@@ -116,16 +116,16 @@ class HashTower {
 function generateMerkleProofFromEvents(itemIdx) {
     const childrens = [];
     const indexes = [];
-    var lvIdx = itemIdx;
+    var lvFullIdx = itemIdx;
     for (let lv = 0; lv < H; lv++) {
-        const chStart = lvIdx - lvIdx % W;
-        const chIdx = lvIdx - chStart;
+        const chIdx = lvFullIdx % W;
+        const chStart = lvFullIdx - chIdx;
         const events = getEvents(lv, chStart, chStart + W);
         if (events[chIdx] === undefined) break;
         childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
         indexes.push(chIdx);
         if (events[W - 1] === undefined) break;
-        lvIdx = Math.floor(lvIdx / W);
+        lvFullIdx = Math.floor(lvFullIdx / W);
     }
     if (childrens.length == 0) return undefined;
     const matchLevel = childrens.length - 1;
