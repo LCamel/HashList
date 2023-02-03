@@ -1,17 +1,9 @@
 "use strict";
 import { poseidon } from "circomlibjs"; // for off-line computing
 
-const profiler = {
-    read: 0, write: 0, hash: 0,
-    r: function() { this.read++ },
-    w: function() { this.write++ },
-    h: function() { this.hash++ },
-    toString: function() { return `read: ${this.read} write: ${this.write} hash: ${this.hash}` }
-};
+// COMMON
 
-// 4 * (4^0 + 4^1 + ... 4^11) = 22369620,  4 * (4^0 + 4^1 + ... 4^15) = 5726623060
-// 256 * (256^0 + 256^1 + ... 256^3) = 4311810304,  256 * (256^0 + 256^1 + ... 256^4) = 1103823438080
-const W = 4;
+const W = 4; // 4 * (4^0 + 4^1 + ... 4^11) = 22369620,  4 * (4^0 + 4^1 + ... 4^15) = 5726623060
 const H = 12;
 const DEBUG_RANGE = false;
 const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((ra, rb) => ra[0] == rb[0] && ra[1] == rb[1]);
@@ -38,7 +30,8 @@ function getLevelLengths(len) {
     return getLevelFullLengths(len).map(toPartialLength);
 }
 
-// simulate the circuit.
+// CIRCUIT
+
 // you can claim that childrens[0][indexes[0]] belongs to the original item list
 function verify(lv0Len, buf, childrens, indexes, matchLevel) {
     // attackers can't aim at a tailing 0 above lv0
@@ -58,8 +51,17 @@ function verify(lv0Len, buf, childrens, indexes, matchLevel) {
     return lv0Safe && everyChildMatches && matchLevelMatches;
 }
 
-// simulating a Solidity storage struct
-class HashTowerData {
+// CONTRACT
+
+const profiler = {
+    read: 0, write: 0, hash: 0,
+    r: function() { this.read++ },
+    w: function() { this.write++ },
+    h: function() { this.hash++ },
+    toString: function() { return `read: ${this.read} write: ${this.write} hash: ${this.hash}` }
+};
+
+class HashTowerData { // struct HashTowerData
     constructor() {
         this.length = 0;
         this.buf = Array.from({length: H}, () => Array(W).fill('_')); // fill _ for visual affects only
@@ -72,15 +74,13 @@ class HashTowerData {
 
 const events = Array.from({length: H}, () => []);
 function emit(lv, lvIdx, val) {
-    //console.log("emit: lv: ", lv, " lvIdx: ", lvIdx, " val: ", val);
     events[lv][lvIdx] = val;
 }
 function getEvents(lv, start, end) {
     return events[lv].slice(start, end); // end exclusive
 }
 
-// simulating a Solidity library
-class HashTower {
+class HashTower { // library HashTower
     add(self, item) {
         const len = self.getLength(); // use the length before adding the item
         const lvFullLengths = getLevelFullLengths(len);
@@ -112,6 +112,8 @@ class HashTower {
     }
 }
 
+// PROVER
+
 // TODO: race condition ?
 function generateMerkleProofFromEvents(itemIdx) {
     const childrens = [];
@@ -137,8 +139,9 @@ function generateMerkleProofFromEvents(itemIdx) {
     return [childrens, indexes, matchLevel];
 }
 
-// direct access without triggering profiling
-function show(len, buf) {
+// DEMO
+
+function show(len, buf) { // direct access without triggering profiling
     console.clear();
     var lvLengths = getLevelLengths(len);
     for (let lv = H - 1; lv >= 0; lv--) {
@@ -171,11 +174,8 @@ for (let i = 0; i < 10000000; i++) {
     console.log("proof for idx 10: ");
     const proof = generateMerkleProofFromEvents(10);
     if (proof) {
-        const OK = ht.loadAndVerify(htd, ...proof);
-        console.log("OK: ", OK);
-
+        console.log("loadAndVerify: ", ht.loadAndVerify(htd, ...proof));
     }
-
     const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
 }
 ht.show(htd.length, htd.buf);
