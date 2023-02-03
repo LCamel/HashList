@@ -71,7 +71,7 @@ const profiler = {
 class HashTowerData { // struct HashTowerData
     constructor() {
         this.length = 0;
-        this.buf = Array.from({length: H}, () => Array(W).fill('_')); // fill _ for visual affects only
+        this.buf = Array.from({length: H}, () => Array(W));
     }
     getLength()        { profiler.r(); return this.length; }
     setLength(l)       { profiler.w(); this.length = l; }
@@ -141,15 +141,12 @@ function generateMerkleProofFromEvents(itemIdx) {
 // DEMO
 
 function show(len, buf) { // direct access without triggering profiling
-    console.clear();
     var lvLengths = getLevelLengths(len);
     for (let lv = H - 1; lv >= 0; lv--) {
         var msg = "lv " + lv + "\t";
         for (let i = 0; i < W; i++) {
-            const s = "" + buf[lv][i];
-            msg += s.length > 20
-                ? s.substring(0, 17) + "..."
-                : s.padStart(20, " ");
+            const s = String(buf[lv][i] ?? '_');
+            msg += s.length > 20 ? s.substring(0, 17) + "..." : s.padStart(20, " ");
             msg += (i == lvLengths[lv] - 1) ? " ↵  " + "\x1b[90m" : "    "; // ↵
         }
         msg += "\x1b[0m";
@@ -164,19 +161,20 @@ function show(len, buf) { // direct access without triggering profiling
 
 const htd = new HashTowerData();
 const ht = new HashTower();
+console.clear();
 show(htd.length, htd.buf);
-for (let i = 0; i < 10000000; i++) {
+for (let i = 0; i < 1000000; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    console.clear();
+
     const item = !DEBUG_RANGE ? BigInt(i) : [i, i];
     ht.add(htd, item);
     show(htd.length, htd.buf);
-
     console.log("proof for idx 10: ");
     const proof = generateMerkleProofFromEvents(10);
     if (proof) {
         console.log("loadAndVerify: ", ht.loadAndVerify(htd, ...proof));
     }
-    const t0 = new Date().getTime(); while (new Date().getTime() < t0 + 1000);
 }
-ht.show(htd.length, htd.buf);
 
 // TODO: hash / read profiling
