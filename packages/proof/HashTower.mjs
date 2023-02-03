@@ -34,8 +34,7 @@ function getLevelLengths(len) {
 
 // you can claim that childrens[0][indexes[0]] belongs to the original item list
 function verify(lv0Len, buf, childrens, indexes, matchLevel) {
-    // attackers can't aim at a tailing 0 above lv0
-    // so we only check the lv0 case
+    // attackers can't aim at a tailing 0 hash above lv0, so we only check the lv0 case
     const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
 
     const chHashes = Array.from({length: H}, (_, lv) => HASH(childrens[lv]));
@@ -52,6 +51,14 @@ function verify(lv0Len, buf, childrens, indexes, matchLevel) {
 }
 
 // CONTRACT
+
+const events = Array.from({length: H}, () => []);
+function emit(lv, lvIdx, val) {
+    events[lv][lvIdx] = val;
+}
+function getEvents(lv, start, end) {
+    return events[lv].slice(start, end); // end exclusive
+}
 
 const profiler = {
     read: 0, write: 0, hash: 0,
@@ -72,19 +79,11 @@ class HashTowerData { // struct HashTowerData
     setBuf(lv, idx, v) { profiler.w(); this.buf[lv][idx] = v; }
 }
 
-const events = Array.from({length: H}, () => []);
-function emit(lv, lvIdx, val) {
-    events[lv][lvIdx] = val;
-}
-function getEvents(lv, start, end) {
-    return events[lv].slice(start, end); // end exclusive
-}
-
 class HashTower { // library HashTower
-    add(self, item) {
-        const len = self.getLength(); // use the length before adding the item
+    add(self, item) {                 // item is BigInt (or range for debugging)
+        const len = self.getLength(); // the length before adding the item
         const lvFullLengths = getLevelFullLengths(len);
-        var toAdd = item; // BigInt or [start, end]
+        var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
             const lvLen = toPartialLength(lvFullLengths[lv]);
             if (lvLen < W) {
@@ -92,7 +91,7 @@ class HashTower { // library HashTower
                 emit(lv, lvFullLengths[lv], toAdd);
                 break;
             } else {
-                const lvHash = HASH(Array.from({length: W}, (v, i) => self.getBuf(lv, i))); profiler.h();
+                const lvHash = HASH(Array.from({length: W}, (_, i) => self.getBuf(lv, i))); profiler.h();
                 self.setBuf(lv, 0, toAdd); // add it in the just-emptied level
                 emit(lv, lvFullLengths[lv], toAdd);
                 toAdd = lvHash;            // to be added in the upper level
