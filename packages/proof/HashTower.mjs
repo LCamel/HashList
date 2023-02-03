@@ -39,15 +39,15 @@ function verify(lv0Len, buf, childrens, indexes, matchLevel) {
 
     const chHashes = Array.from({length: H}, (_, lv) => HASH(childrens[lv]));
 
-    const everyChildMatches = Array.from({length: H}, (_, lv) =>
+    const isMerkleProof = Array.from({length: H}, (_, lv) =>
         lv == 0 ? true : EQ(childrens[lv][indexes[lv]], chHashes[lv - 1]))
         .every((v) => v);
 
-    const matchLevelMatches = EQ(childrens[matchLevel][indexes[matchLevel]], buf[matchLevel][indexes[matchLevel]]);
+    const rootMatches = EQ(childrens[matchLevel][indexes[matchLevel]], buf[matchLevel][indexes[matchLevel]]);
 
-    console.log("verify: ", { lv0Safe, everyChildMatches, matchLevelMatches });
+    console.log("verify: ", { lv0Safe, isMerkleProof, rootMatches });
     console.log("matching level children: ", childrens[matchLevel]);
-    return lv0Safe && everyChildMatches && matchLevelMatches;
+    return lv0Safe && isMerkleProof && rootMatches;
 }
 
 // CONTRACT
