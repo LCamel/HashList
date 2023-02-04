@@ -1,5 +1,5 @@
 "use strict";
-import { poseidon } from "circomlibjs"; // for off-line computing
+import { poseidon } from "circomlibjs";
 
 // COMMON
 
@@ -11,30 +11,30 @@ const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
 const HASH = !DEBUG_RANGE ? poseidon : (ranges) => [ranges[0][0], Math.max(...ranges.map((r) => r[1]))];
 
 // Level lengths in the tower (partial)
-// lv 2:  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  1  1  1  1  1 ...
-// lv 1:  0  0  0  0  0  1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  1  1  1  1  2  2 ...
-// lv 0:  0  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2 ...
+// lv 2: (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0) 1  1  1  1  1  1 ...
+// lv 1: (0  0  0  0  0) 1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  1  1  1  1  2  2 ...
+// lv 0: (0) 1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2 ...
 // len :  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
 // Level full lengths
-// lv 2:  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  1  1  1  1  1 ...
-// lv 1:  0  0  0  0  0  1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  5  5  5  5  6  6 ...
-// lv 0:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
+// lv 2: (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0) 1  1  1  1  1  1 ...
+// lv 1: (0  0  0  0  0) 1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  5  5  5  5  6  6 ...
+// lv 0: (0) 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
 // len :  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
 function getLevelFullLengths(len) {
-    var lengths = [];
-    var zeroIfLessThan = 0;  // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
-    var pow = 1;             // pow = W^lv
+    var lengths = Array(H).fill(0); // TODO: memory cost  v.s.  checking-length cost
+    var zeroIfLessThan = 0;
+    var pow = 1;                    // pow = W^lv
     for (let lv = 0; lv < H; lv++) {
-        zeroIfLessThan += pow;
+        zeroIfLessThan += pow;      // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
         const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) + 1;
-        lengths.push(lvLen); // zero-terminated
         if (lvLen == 0) break;
-        pow *= W;            // use shift if W is power of 2
+        lengths[lv] = lvLen;
+        pow *= W;                   // use shift if W is power of 2
     }
     return lengths;
 }
-function toPartialLength(lvLen) {
-    return lvLen == 0 ? 0 : (lvLen - 1) % W + 1;
+function toPartialLength(fullLen) {
+    return fullLen == 0 ? 0 : (fullLen - 1) % W + 1;
 }
 function getLevelLengths(len) {
     return getLevelFullLengths(len).map(toPartialLength);
@@ -90,8 +90,8 @@ class HashTowerData { // struct HashTowerData
 }
 
 class HashTower { // library HashTower
-    add(self, item) {                 // item is BigInt (or range for debugging)
-        const len = self.getLength(); // the length before adding the item
+    add(self, item) {
+        const len = self.getLength();      // the length before adding the item
         const lvFullLengths = getLevelFullLengths(len);
         var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
@@ -102,7 +102,7 @@ class HashTower { // library HashTower
                 break;
             } else {
                 const lvHash = HASH(Array.from({length: W}, (_, i) => self.getBuf(lv, i))); profiler.h();
-                self.setBuf(lv, 0, toAdd); // add it in the just-emptied level
+                self.setBuf(lv, 0, toAdd); // add it in the considered-just-being-emptied level
                 emit(lv, lvFullLengths[lv], toAdd);
                 toAdd = lvHash;            // to be added in the upper level
             }
@@ -165,8 +165,8 @@ function show(len, buf) { // direct access without triggering profiling
     console.log("\n");
     console.log("length: " + len);
     console.log("profiling:", profiler.toString());
-    console.log("level lengths     : " + lvLengths + ",...");
-    console.log("level full lengths: " + getLevelFullLengths(len) + ",...");
+    console.log("level lengths     : " + lvLengths);
+    console.log("level full lengths: " + getLevelFullLengths(len));
 }
 
 const htd = new HashTowerData();
