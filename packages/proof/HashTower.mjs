@@ -5,6 +5,7 @@ import { poseidon } from "circomlibjs";
 
 const W = 4; // 4 * (4^0 + 4^1 + ... 4^11) = 22369620,  4 * (4^0 + 4^1 + ... 4^15) = 5726623060
 const H = 12;
+
 const DEBUG_RANGE = false; // toggle it to observe the algorithm
 const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((ra, rb) => ra[0] == rb[0] && ra[1] == rb[1]);
 const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
@@ -42,8 +43,8 @@ function getLevelLengths(len) {
 
 // CIRCUIT
 
-// you can claim that childrens[0][indexes[0]] belongs to the original item list
-function verify(lv0Len, buf, childrens, indexes, matchLevel) {
+// claiming that childrens[0][indexes[0]] belongs to the original item list
+function verify(lv0Len, levels, childrens, indexes, matchLevel) {
     // attackers can't aim at a tailing 0 hash above lv0, so we only check the lv0 case
     const lv0Safe = (matchLevel != 0) || (indexes[0] < lv0Len);
 
@@ -53,7 +54,7 @@ function verify(lv0Len, buf, childrens, indexes, matchLevel) {
         lv == 0 ? true : EQ(children[indexes[lv]], chHashes[lv - 1]));
 
     const rootMatches = EQ(childrens[matchLevel][indexes[matchLevel]],
-                                 buf[matchLevel][indexes[matchLevel]]);
+                              levels[matchLevel][indexes[matchLevel]]);
 
     console.log("verify: ", { lv0Safe, isMerkleProof, rootMatches });
     console.log("matching level children: ", childrens[matchLevel]);
@@ -70,7 +71,7 @@ function getEvents(lv, start, end) {
     return events[lv].slice(start, end); // end exclusive
 }
 
-const profiler = {
+const profiler = { // TODO: separate add() and prove()
     read: 0, write: 0, hash: 0,
     r: function() { this.read++ },
     w: function() { this.write++ },
@@ -81,30 +82,30 @@ const profiler = {
 class HashTowerData { // struct HashTowerData
     constructor() {
         this.length = 0;
-        this.buf = Array.from({length: H}, () => Array(W));
+        this.levels = Array.from({length: H}, () => Array(W));
     }
-    getLength()        { profiler.r(); return this.length; }
-    setLength(l)       { profiler.w(); this.length = l; }
-    getBuf(lv, idx)    { profiler.r(); return this.buf[lv][idx]; }
-    setBuf(lv, idx, v) { profiler.w(); this.buf[lv][idx] = v; }
+    getLength()         { profiler.r(); return this.length; }
+    setLength(l)        { profiler.w(); this.length = l; }
+    getLvAt(lv, idx)    { profiler.r(); return this.levels[lv][idx]; }
+    setLvAt(lv, idx, v) { profiler.w(); this.levels[lv][idx] = v; }
 }
 
 class HashTower { // library HashTower
     add(self, item) {
-        const len = self.getLength();      // the length before adding the item
+        const len = self.getLength(); // the length before adding the item
         const lvFullLengths = getLevelFullLengths(len);
         var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
             const lvLen = toPartialLength(lvFullLengths[lv]);
             if (lvLen < W) {
-                self.setBuf(lv, lvLen, toAdd);
+                self.setLvAt(lv, lvLen, toAdd);
                 emit(lv, lvFullLengths[lv], toAdd);
                 break;
             } else {
-                const lvHash = HASH(Array.from({length: W}, (_, i) => self.getBuf(lv, i))); profiler.h();
-                self.setBuf(lv, 0, toAdd); // add it in the considered-just-being-emptied level
+                const lvHash = HASH(Array.from({length: W}, (_, i) => self.getLvAt(lv, i))); profiler.h();
+                self.setLvAt(lv, 0, toAdd); // add it in the considered-just-being-emptied level
                 emit(lv, lvFullLengths[lv], toAdd);
-                toAdd = lvHash;            // to be added in the upper level
+                toAdd = lvHash;             // to be added in the upper level
             }
         }
         self.setLength(len + 1);
@@ -113,11 +114,11 @@ class HashTower { // library HashTower
         const len = self.getLength();
         if (len == 0) return false;
         const lvLengths = getLevelLengths(len);
-        const buf = Array(H);
+        const levels = Array(H);
         for (let lv = 0; lv < H; lv++) {
-            buf[lv] = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getBuf(lv, i) : ZERO);
+            levels[lv] = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getLvAt(lv, i) : ZERO);
         }
-        return verify(lvLengths[0], buf, childrens, indexes, matchLevel);
+        return verify(lvLengths[0], levels, childrens, indexes, matchLevel);
     }
 }
 
@@ -150,12 +151,12 @@ function generateMerkleProofFromEvents(itemIdx) {
 
 // DEMO
 
-function show(len, buf) { // direct access without triggering profiling
+function show(len, levels) { // direct access without triggering profiling
     var lvLengths = getLevelLengths(len);
     for (let lv = H - 1; lv >= 0; lv--) {
         var msg = "lv " + lv + "\t";
         for (let i = 0; i < W; i++) {
-            const s = String(buf[lv][i] ?? '_');
+            const s = String(levels[lv][i] ?? '_');
             msg += s.length > 20 ? s.substring(0, 17) + "..." : s.padStart(20, " ");
             msg += (i == lvLengths[lv] - 1) ? " ↵  " + "\x1b[90m" : "    "; // ↵
         }
@@ -172,19 +173,17 @@ function show(len, buf) { // direct access without triggering profiling
 const htd = new HashTowerData();
 const ht = new HashTower();
 console.clear();
-show(htd.length, htd.buf);
+show(htd.length, htd.levels);
 for (let i = 0; i < 1000000; i++) {
     await new Promise(r => setTimeout(r, 1000));
     console.clear();
 
     const item = !DEBUG_RANGE ? BigInt(i) : [i, i];
     ht.add(htd, item);
-    show(htd.length, htd.buf);
+    show(htd.length, htd.levels);
     console.log("proof for idx 10: ");
     const proof = generateMerkleProofFromEvents(10);
     if (proof) {
         console.log("prove: ", ht.prove(htd, ...proof));
     }
 }
-
-// TODO: hash / read profiling
