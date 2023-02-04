@@ -6,7 +6,7 @@ import { poseidon } from "circomlibjs";
 const W = 4; // 4 * (4^0 + 4^1 + ... 4^11) = 22369620,  4 * (4^0 + 4^1 + ... 4^15) = 5726623060
 const H = 12;
 
-const DEBUG_RANGE = false; // toggle it to observe the algorithm
+const DEBUG_RANGE = process.env.DEBUG_RANGE; // toggle it to observe the algorithm
 const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((ra, rb) => ra[0] == rb[0] && ra[1] == rb[1]);
 const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
 const HASH = !DEBUG_RANGE ? poseidon : (ranges) => [ranges[0][0], Math.max(...ranges.map((r) => r[1]))];
@@ -97,13 +97,13 @@ class HashTower { // library HashTower
         var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
             const lvLen = toPartialLength(lvFullLengths[lv]);
-            if (lvLen < W) {
+            if (lvLen < W) { // not full
                 self.setLvAt(lv, lvLen, toAdd);
                 emit(lv, lvFullLengths[lv], toAdd);
                 break;
-            } else {
+            } else { // full
                 const lvHash = HASH(Array.from({length: W}, (_, i) => self.getLvAt(lv, i))); profiler.h();
-                self.setLvAt(lv, 0, toAdd); // add it in the considered-just-being-emptied level
+                self.setLvAt(lv, 0, toAdd); // add it in the now-considered-being-emptied level
                 emit(lv, lvFullLengths[lv], toAdd);
                 toAdd = lvHash; // to be added in the upper level
             }
@@ -124,7 +124,6 @@ class HashTower { // library HashTower
 
 // PROVER
 
-// TODO: race condition ?
 function generateMerkleProofFromEvents(itemIdx) {
     const childrens = [];
     const indexes = [];
@@ -142,6 +141,7 @@ function generateMerkleProofFromEvents(itemIdx) {
     if (childrens.length == 0) return undefined;
     const matchLevel = childrens.length - 1;
 
+    // make it a Merkle proof all the way to the top
     for (let lv = childrens.length; lv < H; lv++) {
         childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
         indexes.push(0);
@@ -175,7 +175,7 @@ const ht = new HashTower();
 console.clear();
 show(htd.length, htd.levels);
 for (let i = 0; i < 1000000; i++) {
-    await new Promise(r => setTimeout(r, 1000));
+    if (i >= 0) await new Promise(r => setTimeout(r, 1000)); // may skip sleeping
     console.clear();
 
     const item = !DEBUG_RANGE ? BigInt(i) : [i, i];
