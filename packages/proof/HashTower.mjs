@@ -11,12 +11,13 @@ const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((ra, rb) => ra[0] == rb[0] && ra
 const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
 const HASH = !DEBUG_RANGE ? poseidon : (ranges) => [ranges[0][0], Math.max(...ranges.map((r) => r[1]))];
 
-// Level lengths in the tower (partial)
+// Level lengths in the tower (partial). This is the "shape" of the tower.
 // lv 2: (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0) 1  1  1  1  1  1 ...
 // lv 1: (0  0  0  0  0) 1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  1  1  1  1  2  2 ...
 // lv 0: (0) 1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2 ...
 // len :  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
-// Level full lengths
+//
+// Level full lengths. These are only used by events.
 // lv 2: (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0) 1  1  1  1  1  1 ...
 // lv 1: (0  0  0  0  0) 1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  5  5  5  5  6  6 ...
 // lv 0: (0) 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
@@ -111,12 +112,12 @@ class HashTower { // library HashTower
         self.setLength(len + 1);
     }
     prove(self, childrens, indexes, matchLevel) {
-        const len = self.getLength();
-        if (len == 0) return false;
-        const lvLengths = getLevelLengths(len);
-        const levels = Array(H);
+        const levels =  Array.from({length: H}, () => Array(W));
+        const lvLengths = getLevelLengths(self.getLength()); // only load slots we need
         for (let lv = 0; lv < H; lv++) {
-            levels[lv] = Array.from({length: W}, (_, i) => i < lvLengths[lv] ? self.getLvAt(lv, i) : ZERO);
+            for (let i = 0; i < lvLengths[lv]; i++) {
+                levels[lv][i] = self.getLvAt(lv, i); // pad ZERO if lvHash is needed
+            }
         }
         return verify(lvLengths[0], levels, childrens, indexes, matchLevel);
     }
