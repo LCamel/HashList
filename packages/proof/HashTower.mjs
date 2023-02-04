@@ -24,13 +24,13 @@ const HASH = !DEBUG_RANGE ? poseidon : (ranges) => [ranges[0][0], Math.max(...ra
 function getLevelFullLengths(len) {
     var lengths = Array(H).fill(0); // TODO: memory cost  v.s.  checking-length cost
     var zeroIfLessThan = 0;
-    var pow = 1;                    // pow = W^lv
+    var pow = 1; // pow = W^lv
     for (let lv = 0; lv < H; lv++) {
-        zeroIfLessThan += pow;      // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
+        zeroIfLessThan += pow; // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
         const lvLen = (len < zeroIfLessThan) ? 0 : Math.floor((len - zeroIfLessThan) / pow) + 1;
         if (lvLen == 0) break;
         lengths[lv] = lvLen;
-        pow *= W;                   // use shift if W is power of 2
+        pow *= W; // use shift if W is power of 2
     }
     return lengths;
 }
@@ -105,7 +105,7 @@ class HashTower { // library HashTower
                 const lvHash = HASH(Array.from({length: W}, (_, i) => self.getLvAt(lv, i))); profiler.h();
                 self.setLvAt(lv, 0, toAdd); // add it in the considered-just-being-emptied level
                 emit(lv, lvFullLengths[lv], toAdd);
-                toAdd = lvHash;             // to be added in the upper level
+                toAdd = lvHash; // to be added in the upper level
             }
         }
         self.setLength(len + 1);
