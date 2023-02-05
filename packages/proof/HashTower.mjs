@@ -23,7 +23,7 @@ const HASH = !DEBUG_RANGE ? poseidon : (ranges) => [ranges[0][0], Math.max(...ra
 // lv 0: (0) 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
 // len :  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
 function getLevelFullLengths(len) {
-    var lengths = Array(H).fill(0); // TODO: memory cost  v.s.  checking-length cost
+    var lengths = Array(H).fill(0);
     var zeroIfLessThan = 0;
     var pow = 1; // pow = W^lv
     for (let lv = 0; lv < H; lv++) {
@@ -94,7 +94,7 @@ class HashTowerData { // struct HashTowerData
 class HashTower { // library HashTower
     add(self, item) {
         const len = self.getLength(); // the length before adding the item
-        const lvFullLengths = getLevelFullLengths(len);
+        const lvFullLengths = getLevelFullLengths(len); // TODO: inline this function in the loop (solidity)
         var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
             const lvLen = toPartialLength(lvFullLengths[lv]);
