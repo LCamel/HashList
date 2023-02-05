@@ -72,13 +72,17 @@ function getEvents(lv, start, end) {
     return events[lv].slice(start, end); // end exclusive
 }
 
-const profiler = { // TODO: separate add() and prove()
-    read: 0, write: 0, hash: 0,
-    r: function() { this.read++ },
-    w: function() { this.write++ },
-    h: function() { this.hash++ },
-    toString: function() { return `read: ${this.read} write: ${this.write} hash: ${this.hash}` }
+
+class Profiler {
+    constructor() { this.read = this.write = this.hash = 0 }
+    r() { this.read++ }
+    w() { this.write++ }
+    h() { this.hash++ }
+    toString() { return `read: ${this.read} write: ${this.write} hash: ${this.hash}` }
 };
+const PROF_ADD = new Profiler();
+const PROF_PROVE = new Profiler();
+var profiler;
 
 class HashTowerData { // struct HashTowerData
     constructor() {
@@ -93,6 +97,7 @@ class HashTowerData { // struct HashTowerData
 
 class HashTower { // library HashTower
     add(self, item) {
+        profiler = PROF_ADD;
         const len = self.getLength(); // the length before adding the item
         const lvFullLengths = getLevelFullLengths(len); // TODO: inline this function in the loop (solidity)
         var toAdd = item;
@@ -112,6 +117,7 @@ class HashTower { // library HashTower
         self.setLength(len + 1);
     }
     prove(self, childrens, indexes, matchLevel) {
+        profiler = PROF_PROVE;
         const levels =  Array.from({length: H}, () => Array(W));
         const lvLengths = getLevelLengths(self.getLength()); // only load slots we need
         for (let lv = 0; lv < H; lv++) {
@@ -166,7 +172,8 @@ function show(len, levels) { // direct access without triggering profiling
     }
     console.log("\n");
     console.log("length: " + len);
-    console.log("profiling:", profiler.toString());
+    console.log("profiling: add(): " + PROF_ADD);
+    console.log("         prove(): " + PROF_PROVE);
     console.log("level lengths     : " + lvLengths);
     console.log("level full lengths: " + getLevelFullLengths(len));
 }
