@@ -96,9 +96,6 @@ class HashTowerData { // struct HashTowerData
     setLvAt(lv, idx, v) { profiler.w(); this.levels[lv][idx] = v; }
 }
 
-function idxToBufPos(idx) {
-    return idx == 0 ? 0 : (idx - 1) % (HIC - 1) + 1
-}
 class HashTower { // library HashTower
     hashAll(self, lv) {
         profiler.h();
@@ -110,16 +107,16 @@ class HashTower { // library HashTower
         const lvFullLengths = getLevelFullLengths(len); // TODO: inline this function in the loop (solidity)
         var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
-            const lvLen = toInTowerLength(lvFullLengths[lv]);
-            if (lvLen < W) { // level not full
-                if (lvLen <= 1) {
-                    self.setLvAt(lv, lvLen, toAdd);
-                } else {
-                    const idx = (lvLen - 1) % (HIC - 1) + 1;
-                    if (idx == 1) { // buffer full, compress
-                        self.setLvAt(lv, 0, this.hashAll(self, lv));
-                    }
-                    self.setLvAt(lv, idx, toAdd);
+            const lvInTowerLen = toInTowerLength(lvFullLengths[lv]);
+            if (lvInTowerLen < W) { // level not full
+                // lvInTowerLen: 0 1  2 3 4  5 6 7  8 9 10
+                // lvStorageLen: 0 1  2 3 4  2 3 4  2 3 4
+                const lvStorageLen = lvInTowerLen < 2 ? lvInTowerLen : (lvInTowerLen - 2) % (HIC - 1) + 2;
+                if (lvStorageLen < HIC) { // storage not full
+                    self.setLvAt(lv, lvStorageLen, toAdd);
+                } else { // full
+                    self.setLvAt(lv, 0, this.hashAll(self, lv));
+                    self.setLvAt(lv, 1, toAdd);
                 }
                 emit(lv, lvFullLengths[lv], toAdd);
                 break;
