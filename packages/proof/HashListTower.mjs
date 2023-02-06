@@ -12,13 +12,13 @@ const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((ra, rb) => ra[0] == rb[0] && ra
 const ZERO = !DEBUG_RANGE ? BigInt(0) : [0, 0];
 const HASH = !DEBUG_RANGE ? poseidon : (ranges) => [ranges[0][0], Math.max(...ranges.map((r) => r[1]))];
 
-// Level lengths in the tower (partial). This is the "shape" of the tower.
+// Level lengths in the tower. This is the "shape" of the tower.
 // lv 2: (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0) 1  1  1  1  1  1 ...
 // lv 1: (0  0  0  0  0) 1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  1  1  1  1  2  2 ...
 // lv 0: (0) 1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2  3  4  1  2 ...
 // len :  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
 //
-// Level full lengths. These are only used by events.
+// Level full lengths (including parts not in the tower). These are only used by events.
 // lv 2: (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0) 1  1  1  1  1  1 ...
 // lv 1: (0  0  0  0  0) 1  1  1  1  2  2  2  2  3  3  3  3  4  4  4  4  5  5  5  5  6  6 ...
 // lv 0: (0) 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ...
@@ -36,11 +36,11 @@ function getLevelFullLengths(len) {
     }
     return lengths;
 }
-function toPartialLength(fullLen) {
+function toInTowerLength(fullLen) {
     return fullLen == 0 ? 0 : (fullLen - 1) % W + 1;
 }
-function getLevelLengths(len) {
-    return getLevelFullLengths(len).map(toPartialLength);
+function getLevelInTowerLengths(len) {
+    return getLevelFullLengths(len).map(toInTowerLength);
 }
 
 // CIRCUIT
@@ -110,7 +110,7 @@ class HashTower { // library HashTower
         const lvFullLengths = getLevelFullLengths(len); // TODO: inline this function in the loop (solidity)
         var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
-            const lvLen = toPartialLength(lvFullLengths[lv]);
+            const lvLen = toInTowerLength(lvFullLengths[lv]);
             if (lvLen < W) { // level not full
                 if (lvLen <= 1) {
                     self.setLvAt(lv, lvLen, toAdd);
@@ -135,7 +135,7 @@ class HashTower { // library HashTower
     prove(self, childrens, indexes, matchLevel) {
         profiler = PROF_PROVE;
         const levels =  Array.from({length: H}, () => Array(W));
-        const lvLengths = getLevelLengths(self.getLength()); // only load slots we need
+        const lvLengths = getLevelInTowerLengths(self.getLength()); // only load slots we need
         for (let lv = 0; lv < H; lv++) {
             for (let i = 0; i < lvLengths[lv]; i++) {
                 levels[lv][i] = self.getLvAt(lv, i); // pad ZERO if lvHash is needed
@@ -175,7 +175,7 @@ function generateMerkleProofFromEvents(itemIdx) {
 // DEMO
 
 function show(len, levels) { // direct access without triggering profiling
-    var lvLengths = getLevelLengths(len);
+    var lvLengths = getLevelInTowerLengths(len);
     for (let lv = H - 1; lv >= 0; lv--) {
         var msg = "lv " + lv + "\t";
         for (let i = 0; i < HIC; i++) {
@@ -190,8 +190,8 @@ function show(len, levels) { // direct access without triggering profiling
     console.log("length: " + len);
     console.log("profiling: add(): " + PROF_ADD);
     console.log("         prove(): " + PROF_PROVE);
-    console.log("level lengths     : " + lvLengths);
-    console.log("level full lengths: " + getLevelFullLengths(len));
+    console.log("level in tower lengths: " + lvLengths);
+    console.log("level full lengths    : " + getLevelFullLengths(len));
 }
 
 const htd = new HashTowerData();
