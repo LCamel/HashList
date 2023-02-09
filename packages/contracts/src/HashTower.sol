@@ -16,7 +16,7 @@ contract HashTower {
     uint256 private length;
     uint256[W][H] private levels;
 
-    event Add(uint indexed level, uint indexed lvFullIndex, uint value); // TODO: merge
+    event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value); // TODO: merge
 
     function add(uint256 toAdd) public {
         uint256 len = length; // the length before adding the item

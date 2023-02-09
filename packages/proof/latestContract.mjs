@@ -17,8 +17,12 @@ console.log(address);
 const length0 = await provider.getStorageAt(address, 0);
 console.assert(length0 == 0, "length should be 0");
 
+const ABI = [
+    "event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value)",
+    "function add(uint)"
+];
 const signer = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider);
-const contract = new ethers.Contract(address, [ "function add(uint)" ], signer);
+const contract = new ethers.Contract(address, ABI, signer);
 
 for (let item = 0; item < 21; item++) {
     const txResponse = await contract.add(item);
@@ -26,6 +30,11 @@ for (let item = 0; item < 21; item++) {
 }
 const length21 = await provider.getStorageAt(address, 0);
 console.assert(length21 == 21, "length should be 21");
+
+const filter = contract.filters.Add(1);
+const events = await contract.queryFilter(filter);
+console.log(events);
+
 
 const W = 4;
 const H = 5;
