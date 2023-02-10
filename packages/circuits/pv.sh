@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-CIRCUIT=HashList4Depth4Arity2
+#CIRCUIT=HashList4Depth4Arity2
+CIRCUIT=$1
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 BASE_DIR=${SCRIPT_DIR}
@@ -26,8 +27,8 @@ cat call_remix.txt | perl -lape 's/\"(.*?)"/uint($1)/g' | tee call_solidity.txt
 echo "==== for debugging: "
 (echo '['; cat call_remix.txt; echo ']') | jq . | perl -Mbigint -lape 's/(0x(\w+)?)/hex($1)/eg' | tee call_debug.txt
 
-echo "==== for forge cast: "
-SIG=$(jq .metadata.output.devdoc.methods ../${CIRCUIT}Verifier.sol/${CIRCUIT}Verifier.json | grep -oh 'verifyProof.*[)]')
-cat <<EOF | sed -e 's/"//g' | tee call_forge_cast.txt
-cast call \$ADDR '${SIG}' '$(jq -c '.[0]' call_debug.txt)' '$(jq -c '.[1]' call_debug.txt)' '$(jq -c '.[2]' call_debug.txt)' '$(jq -c '.[3]' call_debug.txt)'
-EOF
+# echo "==== for forge cast: "
+# SIG=$(jq .metadata.output.devdoc.methods ../${CIRCUIT}Verifier.sol/${CIRCUIT}Verifier.json | grep -oh 'verifyProof.*[)]')
+# cat <<EOF | sed -e 's/"//g' | tee call_forge_cast.txt
+# cast call \$ADDR '${SIG}' '$(jq -c '.[0]' call_debug.txt)' '$(jq -c '.[1]' call_debug.txt)' '$(jq -c '.[2]' call_debug.txt)' '$(jq -c '.[3]' call_debug.txt)'
+# EOF

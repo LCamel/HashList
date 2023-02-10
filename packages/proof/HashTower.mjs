@@ -4,7 +4,7 @@ import { poseidon } from "circomlibjs";
 // COMMON
 
 const W = 4; // 4 * (4^0 + 4^1 + ... 4^11) = 22369620,  4 * (4^0 + 4^1 + ... 4^15) = 5726623060
-const H = 12;
+const H = 4;
 
 const DEBUG_RANGE = process.env.DEBUG_RANGE; // toggle it to observe the algorithm
 const EQ = !DEBUG_RANGE ? ((a, b) => a == b) : ((ra, rb) => ra[0] == rb[0] && ra[1] == rb[1]);
@@ -182,8 +182,9 @@ const htd = new HashTowerData();
 const ht = new HashTower();
 console.clear();
 show(htd.length, htd.levels);
-for (let i = 0; i < 1000000; i++) {
-    if (i >= 0) await new Promise(r => setTimeout(r, 1000)); // may skip sleeping
+//for (let i = 0; i < 1000000; i++) {
+for (let i = 0; i < 25; i++) {
+    if (i >= 24) await new Promise(r => setTimeout(r, 1000)); // may skip sleeping
     console.clear();
 
     const item = !DEBUG_RANGE ? BigInt(i) : [i, i];
@@ -195,3 +196,26 @@ for (let i = 0; i < 1000000; i++) {
         console.log("prove: ", ht.prove(htd, ...proof));
     }
 }
+
+// generate a input.json for the circom verifier
+const proof = generateMerkleProofFromEvents(10);
+const lvInTowerLengths = getLevelInTowerLengths(htd.length);
+const levels = Array.from({length: H}, () => Array(W));
+for (let lv = 0; lv < H; lv++) {
+    for (let i = 0; i < W; i++) {
+        levels[lv][i] = (i < lvInTowerLengths[lv]) ? htd.levels[lv][i] : 0;
+    }
+}
+
+const inputJson = {
+    lv0Len: lvInTowerLengths[0],
+    levels: levels,
+    childrens: proof[0],
+    indexes: proof[1],
+    matchLevel: proof[2]
+};
+
+
+BigInt.prototype.toJSON = function() { return this.toString() }
+
+console.log(JSON.stringify(inputJson));
