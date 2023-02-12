@@ -110,7 +110,7 @@ template HashTower(H, W) {
     out <== isMerkleProof[H - 1];
 }
 
-component main { public [ lv0Len, levels ] } = HashTower(4, 4);
+component main { public [ lv0Len, levels ] } = HashTower(2, 2);
 
 // > var { poseidon } = require("circomlibjs");
 // > poseidon([1, 2])
