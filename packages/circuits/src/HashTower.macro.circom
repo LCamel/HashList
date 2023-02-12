@@ -24,7 +24,7 @@ template PickOneFromEachRow(ROWS, COLS) {
     component pickOne[ROWS];
     for (var r = 0; r < ROWS; r++) {
         pickOne[r] = PickOne(COLS);
-        for (var c = 0; c < COLS; c++) { pickOne[r].in[c] <== in[r][c]; }
+        @COLS pickOne[r].in@* <== in[r]@*;
         pickOne[r].sel <== whichCol[r];
         out[r] <== pickOne[r].out;
     }
@@ -59,19 +59,13 @@ template HashTower(H, W) {
     component chHashes[H];
     for (var lv = 0; lv < H; lv++) {
         chHashes[lv] = Poseidon(W);
-        for (var i = 0; i < W; i++) {
-            chHashes[lv].inputs[i] <== childrens[lv][i];
-        }
+        @W chHashes[lv].inputs@* <== childrens[lv]@*;
     }
     // chHashes[lv].out
 
     component pickOneFromEachChildren = PickOneFromEachRow(H, W);
-    for (var lv = 0; lv < H; lv++) {
-        for (var i = 0; i < W; i++) {
-            pickOneFromEachChildren.in[lv][i] <== childrens[lv][i];
-        }
-        pickOneFromEachChildren.whichCol[lv] <== indexes[lv];
-    }
+    @H@@W pickOneFromEachChildren.in@* <== childrens@*;
+    @H pickOneFromEachChildren.whichCol@* <== indexes@*;
     // pickOneFromEachChildren.out[]
 
     // JS: const isMerkleProof = childrens.every((children, lv) =>
@@ -90,17 +84,14 @@ template HashTower(H, W) {
     // JS: const rootMatches = EQ(childrens[matchLevel][indexes[matchLevel]],
     //                               levels[matchLevel][indexes[matchLevel]]);
     component pickOneFromEachLevel = PickOneFromEachRow(H, W);
-    for (var lv = 0; lv < H; lv++) {
-        for (var i = 0; i < W; i++) {
-            pickOneFromEachLevel.in[lv][i] <== levels[lv][i];
-        }
-        pickOneFromEachLevel.whichCol[lv] <== indexes[lv];
-    }
+    @H@@W pickOneFromEachLevel.in@* <== levels@*;
+    @H pickOneFromEachLevel.whichCol@* <== indexes@*;
+
     component theChild = PickOne(H);
-    for (var lv = 0; lv < H; lv++) { theChild.in[lv] <== pickOneFromEachChildren.out[lv]; }
+    @H theChild.in@* <== pickOneFromEachChildren.out@*;
     theChild.sel <== matchLevel;
     component theRoot = PickOne(H);
-    for (var lv = 0; lv < H; lv++) { theRoot.in[lv] <== pickOneFromEachLevel.out[lv]; }
+    @H theRoot.in@* <== pickOneFromEachLevel.out@*;
     theRoot.sel <== matchLevel;
 
     theChild.out === theRoot.out;
@@ -174,7 +165,7 @@ component main { public [ lv0Len, levels ] } = HashTower(2, 2);
 } */
 
 // targeting "hash(3, 4)" in lv1
-/* INPUTGOOD = {
+/* INPUT = {
 "lv0Len": 1,
 "levels": [
     [5, 6],
