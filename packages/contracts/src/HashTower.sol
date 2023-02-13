@@ -26,7 +26,10 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
     // TODO: merge fields
     event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value); // TODO: merge
 
+    // TODO: function getDimensions()
+
     function add(uint256 toAdd) public {
+        // TODO: check capacity
         uint256 len = length; // the length before adding the item
         uint64 zeroIfLessThan = 0;
         uint64 pow = 1; // pow = W^lv
@@ -54,7 +57,7 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
     function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool) {
         uint256[2 + W * H] memory pub;
 
-        uint256 len = length;
+        uint256 len = length; // TODO: uint64
         pub[0] = 1; // the circuit output must be "true"
         pub[1] = len < 1 ? 0 : (len - 1) % W + 1;
         uint64 zeroIfLessThan = 0;
@@ -69,6 +72,23 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
             pow *= W;
         }
         return verifier.verifyProof(a, b, c, pub);
+    }
+    function lengthAndLevels() public view returns (uint64 _length, uint256[W][H] memory _levels) {
+        uint64 len = uint64(length);
+        //uint8 lv0Len = uint8(len < 1 ? 0 : (len - 1) % W + 1);
+        uint64 zeroIfLessThan = 0;
+        uint64 pow = 1; // pow = W^lv
+        for (uint8 lv = 0; lv < H; lv++) {
+            zeroIfLessThan += pow; // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
+            uint64 lvLen = uint64((len < zeroIfLessThan) ? 0 : ((len - zeroIfLessThan) / pow) % W + 1);
+            if (lvLen == 0) break;
+            for (uint8 i = 0; i < lvLen; i++) {
+                _levels[lv][i] = levels[lv][i];
+            }
+            pow *= W;
+        }
+        //return (len, lv0Len, _levels);
+        return (len, _levels);
     }
     /*
     function show() public view returns (uint8) {

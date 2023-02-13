@@ -18,10 +18,13 @@ console.log(address);
 const length0 = await provider.getStorageAt(address, 0);
 console.assert(length0 == 0, "length should be 0");
 
+// TODO: 2D array type is now hard-coded in lengthAndLevels()
+// WARNING: just copy and paste the function prototype will get CALL_EXCEPTION!
 const ABI = [
     "event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value)",
     "function add(uint)",
-    "function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool)"
+    "function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool)",
+    "function lengthAndLevels() public view returns (uint64 _length, uint256[2][2] memory _levels)"
 ];
 const signer = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider);
 const contract = new ethers.Contract(address, ABI, signer);
@@ -33,6 +36,17 @@ for (let item = 1; item <= 6; item++) {
 const length6 = await provider.getStorageAt(address, 0);
 console.assert(length6 == 6, "length should be 6");
 
+const W = 2; // TODO: load from contract
+const H = 2;
+const { _length, _levels } = await contract.lengthAndLevels();
+
+const levels = _levels.map((row) => row.map((v) => v.toBigInt()));
+console.log("===========");
+console.log(_length);
+//console.log(_lv0Len);
+console.log(_levels);
+
+
 /*
 const filter = contract.filters.Add(1);
 const events = await contract.queryFilter(filter);
@@ -42,10 +56,7 @@ const WASM = "../circuits/out/HashTower_js/HashTower.wasm";
 const ZKEY = "../circuits/out/HashTower_js/HashTower_0001.zkey";
 const INPUT = {
     "lv0Len": 2,
-    "levels": [
-        [5, 6],
-        ["7853200120776062878684798364095072458815029376092732009249414926327459813530", "14763215145315200506921711489642608356394854266165572616578112107564877678998"]
-    ],
+    "levels": levels,
     "childrens": [
         [3, 4],
         ["42424242", "14763215145315200506921711489642608356394854266165572616578112107564877678998"]
@@ -56,6 +67,9 @@ const INPUT = {
     ],
     "matchLevel": 1
     };
+
+
+
 const { proof } = await groth16.fullProve(INPUT, WASM, ZKEY);
 console.log(proof);
 
