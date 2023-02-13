@@ -50,14 +50,11 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
         }
         length = len + 1;
     }
-    // mind the order of b
-    function proof() external view returns (bool) {
-        //uint[2] memory a, uint[2][2] memory b, uint[2] memory c
-        uint[2] memory a; uint[2][2] memory b; uint[2] memory c;
+    // mind the order of b columns
+    function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool) {
         uint256[2 + W * H] memory pub;
 
         uint256 len = length;
-        console.log("len: ", len);
         pub[0] = 1; // the circuit output must be "true"
         pub[1] = len < 1 ? 0 : (len - 1) % W + 1;
         uint64 zeroIfLessThan = 0;
@@ -71,14 +68,6 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
             }
             pow *= W;
         }
-        for (uint i = 0; i < 6; i++) {
-            console.log(i, pub[i]);
-        }
-a = [uint(0x1c84d7b34c731bd9d27c7ce2ee6617653b27afdcc425edd90a2c4e9591d3a33f), uint(0x29ce24df05204095fb682b16f120a74737583926d32d54ae71dce59eb69f3a32)];
-b = [[uint(0x13a9beee405c497c6ecc5bbe5587c2a71b62b764f12c2264c98242d107443509), uint(0x2ddef2d7f543f8542bc9e7b625b7e1eb9884f3ad72f146dc4041927994403ff9)],[uint(0x0163caee3997c322b7db80307cffc42784465e3f21415c4d22a723204cd3ed58), uint(0x1b2243b4dfee2df88ebee79509929ebcf7d5bd7ddcf0692d0b64c6c68aaae122)]];
-c = [uint(0x06c4625e4cc6c59cc154bb491d1bd5de96dae2e8fd70b8e76a8c0b6f57490299), uint(0x0f70fc63789fc4fa3f7c3e268f617e8181a94e3b97bc62f9446d6cc03a220e25)];
-//pub = [uint(0x0000000000000000000000000000000000000000000000000000000000000001),uint(0x0000000000000000000000000000000000000000000000000000000000000002),uint(0x0000000000000000000000000000000000000000000000000000000000000005),uint(0x0000000000000000000000000000000000000000000000000000000000000006),uint(0x115cc0f5e7d690413df64c6b9662e9cf2a3617f2743245519e19607a4417189a),uint(0x20a3af0435914ccd84b806164531b0cd36e37d4efb93efab76913a93e1f30996)];
-
         return verifier.verifyProof(a, b, c, pub);
     }
     /*
