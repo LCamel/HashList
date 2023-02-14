@@ -127,6 +127,8 @@ const c = [ proof.pi_c[0], proof.pi_c[1] ];
 console.log("calling contract.prove()...");
 const isValid = await contract.prove(a, b, c);
 console.log("isValid: " + isValid);
+const gas = await contract.estimateGas.prove(a, b, c);
+console.log("estimated gas: " + gas);
 
 /*
 const W = 4;
