@@ -23,13 +23,11 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
     uint256 private length;
     uint256[W][H] private levels;
 
-    // TODO: merge fields
-    event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value); // TODO: merge
+    event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value); // TODO: merge fields
 
-    // TODO: function getDimensions()
 
     function add(uint256 toAdd) public {
-        // TODO: check capacity
+        // TODO: check capacity or forcing a high capacity tower
         uint256 len = length; // the length before adding the item
         uint64 zeroIfLessThan = 0;
         uint64 pow = 1; // pow = W^lv
@@ -73,7 +71,7 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
         }
         return verifier.verifyProof(a, b, c, pub);
     }
-
+    // since this is a "view" function, we just load all the storage slots
     function lengthAndLevels() public view returns (uint64, uint256[][] memory) {
         uint256[][] memory _levels = new uint256[][](H);
         for (uint8 lv = 0; lv < H; lv++) {
@@ -84,15 +82,4 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
         }
         return (uint64(length), _levels);
     }
-    /*
-    function show() public view returns (uint8) {
-        for (uint8 lv = H - 1; lv >= 0; lv--) {
-            console.log("lv: ", lv);
-            for (uint8 i = 0; i < W; i++) {
-                console.log(levels[lv][i]);
-            }
-        }
-        return 1;
-    }
-    */
 }
