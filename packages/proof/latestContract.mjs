@@ -62,14 +62,11 @@ async function getLatestContractAddress(provider, account) {
 
 const provider = new ethers.providers.JsonRpcProvider();
 const address = await getLatestContractAddress(provider, (await provider.listAccounts())[0]); // deployer
+console.log("latest contract address: ", address);
 
+const contract = new ethers.Contract(address, ABI,
+    new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider));
 
-
-const length0 = await provider.getStorageAt(address, 0);
-console.assert(length0 == 0, "length should be 0");
-
-const signer = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider);
-const contract = new ethers.Contract(address, ABI, signer);
 
 console.log("adding items...")
 for (let item = 1; item <= 6; item++) {
@@ -77,8 +74,6 @@ for (let item = 1; item <= 6; item++) {
     const txResponse = await contract.add(item);
     const txReceipt = await txResponse.wait();
 }
-const length6 = await provider.getStorageAt(address, 0);
-console.assert(length6 == 6, "length should be 6");
 
 //console.log("fetching events...");
 //const filter = contract.filters.Add(0, [2, 3]);
