@@ -49,6 +49,25 @@ async function generateMerkleProofFromEvents(contract, W, H, itemIdx) {
     return [childrens, indexes, matchLevel];
 }
 
+async function generateCircuitInput(contract, itemIdx) {
+    console.log("calling lengthAndLevels...");
+    const lengthAndLevels = await contract.lengthAndLevels();
+    const length = lengthAndLevels[0].toNumber(); // 2^53 should be enough
+    const levels = lengthAndLevels[1].map((row) => row.map((v) => v.toBigInt()));
+    const H = levels.length;
+    const W = levels[0].length;
+    const lv0Len = length < 1 ? 0 : (length - 1) % W + 1;
+
+    //console.log("===========");
+    //console.log("H: ", H, " W: ", W, " lv0Len: ", lv0Len);
+    //console.log("levels: ", levels);
+
+    const [childrens, indexes, matchLevel] = await generateMerkleProofFromEvents(contract, W, H, itemIdx);
+
+    const input = { lv0Len, levels, childrens, indexes, matchLevel };
+    return input;
+
+}
 async function getLatestContractAddress(provider, account) {
     var nonce = await provider.getTransactionCount(account);
     var address;
@@ -75,48 +94,13 @@ for (let item = 1; item <= 6; item++) {
     const txReceipt = await txResponse.wait();
 }
 
-//console.log("fetching events...");
-//const filter = contract.filters.Add(0, [2, 3]);
-//const events = await contract.queryFilter(filter);
-//console.log(events.length);
-//console.log(events[0]);
 
-
-
-console.log("calling lengthAndLevels...");
-const lengthAndLevels = await contract.lengthAndLevels();
-const length = lengthAndLevels[0].toNumber(); // 2^53 should be enough
-const levels = lengthAndLevels[1].map((row) => row.map((v) => v.toBigInt()));
-const H = levels.length;
-const W = levels[0].length;
-const lv0Len = length < 1 ? 0 : (length - 1) % W + 1;
-
-console.log("===========");
-console.log("H: ", H, " W: ", W, " lv0Len: ", lv0Len);
-console.log("levels: ", levels);
-
-
-
-const [childrens, indexes, matchLevel] = await generateMerkleProofFromEvents(contract, W, H, 1);
-
-/*
-const filter = contract.filters.Add(1);
-const events = await contract.queryFilter(filter);
-console.log(events);
-*/
 const WASM = "../circuits/out/HashTower_js/HashTower.wasm";
 const ZKEY = "../circuits/out/HashTower_js/HashTower_0001.zkey";
-const INPUT = {
-    "lv0Len": lv0Len,
-    "levels": levels,
-    "childrens": childrens,
-    "indexes": indexes,
-    "matchLevel": matchLevel
-    };
-console.log("INPUT: ", INPUT);
+const input = await generateCircuitInput(contract, 1);
 
 console.log("generating groth16.fullProve()...")
-const { proof } = await groth16.fullProve(INPUT, WASM, ZKEY);
+const { proof } = await groth16.fullProve(input, WASM, ZKEY);
 console.log(proof);
 
 const a = [ proof.pi_a[0], proof.pi_a[1] ];
