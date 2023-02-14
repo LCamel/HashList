@@ -79,13 +79,17 @@ async function getLatestContractAddress(provider, account) {
     return address;
 }
 
-const provider = new ethers.providers.JsonRpcProvider();
-const address = await getLatestContractAddress(provider, (await provider.listAccounts())[0]); // deployer
-console.log("latest contract address: ", address);
+async function getContract() {
+    const provider = new ethers.providers.JsonRpcProvider();
+    const address = await getLatestContractAddress(provider, (await provider.listAccounts())[0]); // deployer
+    console.log("latest contract address: ", address);
 
-const contract = new ethers.Contract(address, ABI,
-    new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider));
+    const contract = new ethers.Contract(address, ABI,
+        new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider));
+    return contract;
+}
 
+const contract = await getContract();
 
 console.log("adding items...")
 for (let item = 1; item <= 6; item++) {
