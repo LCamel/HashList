@@ -39,10 +39,11 @@ console.assert(length6 == 6, "length should be 6");
 
 console.log("calling lengthAndLevels...");
 const lengthAndLevels = await contract.lengthAndLevels();
-const length = lengthAndLevels[0].toBigInt();
+const length = lengthAndLevels[0].toNumber(); // 2^53 should be enough
 const levels = lengthAndLevels[1].map((row) => row.map((v) => v.toBigInt()));
 const H = levels.length;
 const W = levels[0].length;
+const lv0Len = length < 1 ? 0 : (length - 1) % W + 1;
 
 console.log("===========");
 console.log(length);
@@ -58,7 +59,7 @@ console.log(events);
 const WASM = "../circuits/out/HashTower_js/HashTower.wasm";
 const ZKEY = "../circuits/out/HashTower_js/HashTower_0001.zkey";
 const INPUT = {
-    "lv0Len": 2,
+    "lv0Len": lv0Len,
     "levels": levels,
     "childrens": [
         [3, 4],
@@ -70,7 +71,7 @@ const INPUT = {
     ],
     "matchLevel": 1
     };
-
+console.log("INPUT: ", INPUT);
 
 
 const { proof } = await groth16.fullProve(INPUT, WASM, ZKEY);
