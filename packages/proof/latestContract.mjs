@@ -4,6 +4,52 @@ import { poseidon } from "circomlibjs";
 import { groth16 } from "snarkjs";
 
 
+const ABI = [
+    "event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value)",
+    "function add(uint)",
+    "function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool)",
+    "function lengthAndLevels() public view returns (uint64, uint256[][] memory)"
+];
+
+async function getEvents(contract, lv, chStart, chEnd) { // end exclusive
+    console.log("in getEvents(): lv: ", lv, " chStart: ", chStart, " chEnd: ", chEnd);
+    const indexes = [];
+    for (let i = chStart; i < chEnd; i++) indexes.push(i);
+    const filter = contract.filters.Add(lv, indexes);
+    const events = await contract.queryFilter(filter);
+    return events.map((e) => e.args.value.toBigInt());
+}
+
+async function generateMerkleProofFromEvents(contract, W, H, itemIdx) {
+    const ZERO = 0n;
+    const HASH = poseidon;
+
+    const childrens = [];
+    const indexes = [];
+    var lvFullIdx = itemIdx;
+    for (let lv = 0; lv < H; lv++) {
+        const chIdx = lvFullIdx % W;
+        const chStart = lvFullIdx - chIdx;
+        const events = await getEvents(contract, lv, chStart, chStart + W);
+        console.log("events for lv: ", lv, events);
+        if (events[chIdx] === undefined) break;
+        childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
+        indexes.push(chIdx);
+        if (events[W - 1] === undefined) break;
+        lvFullIdx = Math.floor(lvFullIdx / W);
+    }
+    if (childrens.length == 0) return undefined;
+    const matchLevel = childrens.length - 1;
+
+    // make it a Merkle proof all the way to the top
+    for (let lv = childrens.length; lv < H; lv++) {
+        childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
+        indexes.push(0);
+    }
+    return [childrens, indexes, matchLevel];
+}
+
+
 const provider = new ethers.providers.JsonRpcProvider();
 const account = (await provider.listAccounts())[0]; // ?
 var nonce = await provider.getTransactionCount(account);
@@ -19,14 +65,6 @@ console.log("address: ", address);
 const length0 = await provider.getStorageAt(address, 0);
 console.assert(length0 == 0, "length should be 0");
 
-// TODO: 2D array type is now hard-coded in lengthAndLevels()
-// WARNING: just copy and paste the function prototype will get CALL_EXCEPTION!
-const ABI = [
-    "event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value)",
-    "function add(uint)",
-    "function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool)",
-    "function lengthAndLevels() public view returns (uint64, uint256[][] memory)"
-];
 const signer = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider);
 const contract = new ethers.Contract(address, ABI, signer);
 
@@ -46,14 +84,6 @@ console.assert(length6 == 6, "length should be 6");
 //console.log(events[0]);
 
 
-async function getEvents(lv, chStart, chEnd) { // end exclusive
-    console.log("in getEvents(): lv: ", lv, " chStart: ", chStart, " chEnd: ", chEnd);
-    const indexes = [];
-    for (let i = chStart; i < chEnd; i++) indexes.push(i);
-    const filter = contract.filters.Add(lv, indexes);
-    const events = await contract.queryFilter(filter);
-    return events.map((e) => e.args.value.toBigInt());
-}
 
 console.log("calling lengthAndLevels...");
 const lengthAndLevels = await contract.lengthAndLevels();
@@ -68,36 +98,8 @@ console.log("H: ", H, " W: ", W, " lv0Len: ", lv0Len);
 console.log("levels: ", levels);
 
 
-async function generateMerkleProofFromEvents(W, H, itemIdx) {
-    const ZERO = 0n;
-    const HASH = poseidon;
 
-    const childrens = [];
-    const indexes = [];
-    var lvFullIdx = itemIdx;
-    for (let lv = 0; lv < H; lv++) {
-        const chIdx = lvFullIdx % W;
-        const chStart = lvFullIdx - chIdx;
-        const events = await getEvents(lv, chStart, chStart + W);
-        console.log("events for lv: ", lv, events);
-        if (events[chIdx] === undefined) break;
-        childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
-        indexes.push(chIdx);
-        if (events[W - 1] === undefined) break;
-        lvFullIdx = Math.floor(lvFullIdx / W);
-    }
-    if (childrens.length == 0) return undefined;
-    const matchLevel = childrens.length - 1;
-
-    // make it a Merkle proof all the way to the top
-    for (let lv = childrens.length; lv < H; lv++) {
-        childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
-        indexes.push(0);
-    }
-    return [childrens, indexes, matchLevel];
-}
-
-const [childrens, indexes, matchLevel] = await generateMerkleProofFromEvents(W, H, 1);
+const [childrens, indexes, matchLevel] = await generateMerkleProofFromEvents(contract, W, H, 1);
 
 /*
 const filter = contract.filters.Add(1);
