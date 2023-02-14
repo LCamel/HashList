@@ -130,16 +130,4 @@ console.log("isValid: " + isValid);
 const gas = await contract.estimateGas.prove(a, b, c);
 console.log("estimated gas: " + gas);
 
-/*
-const W = 4;
-const H = 5;
-for (let lv = 0; lv < H; lv++) {
-    var msg = "";
-    for (let i = 0; i < W; i++) {
-        msg += " " + await provider.getStorageAt(address, 1 + lv * W + i);
-    }
-    console.log(msg);
-}
-*/
-// 5703642902925079077973536892547657253027257210241120904109323042937339552649
-// 0x0c9c25c15e58dffcccface7fbb300ecfa5c9bbf183dcf83d7061ba2bd1e6a389
+process.exit(0); // quit ffjavascript workers
