@@ -73,22 +73,16 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
         }
         return verifier.verifyProof(a, b, c, pub);
     }
-    function lengthAndLevels() public view returns (uint64 _length, uint256[W][H] memory _levels) {
-        uint64 len = uint64(length);
-        //uint8 lv0Len = uint8(len < 1 ? 0 : (len - 1) % W + 1);
-        uint64 zeroIfLessThan = 0;
-        uint64 pow = 1; // pow = W^lv
+
+    function lengthAndLevels() public view returns (uint64, uint256[][] memory) {
+        uint256[][] memory _levels = new uint256[][](H);
         for (uint8 lv = 0; lv < H; lv++) {
-            zeroIfLessThan += pow; // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
-            uint64 lvLen = uint64((len < zeroIfLessThan) ? 0 : ((len - zeroIfLessThan) / pow) % W + 1);
-            if (lvLen == 0) break;
-            for (uint8 i = 0; i < lvLen; i++) {
+            _levels[lv] = new uint256[](W);
+            for (uint8 i = 0; i < W; i++) {
                 _levels[lv][i] = levels[lv][i];
             }
-            pow *= W;
         }
-        //return (len, lv0Len, _levels);
-        return (len, _levels);
+        return (uint64(length), _levels);
     }
     /*
     function show() public view returns (uint8) {

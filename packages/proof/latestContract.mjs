@@ -12,7 +12,7 @@ while (nonce >= 0) {
     if ((await provider.getCode(address)).length > 2) break;
     nonce--;
 }
-console.log(address);
+console.log("address: ", address);
 
 
 const length0 = await provider.getStorageAt(address, 0);
@@ -24,11 +24,12 @@ const ABI = [
     "event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value)",
     "function add(uint)",
     "function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool)",
-    "function lengthAndLevels() public view returns (uint64 _length, uint256[2][2] memory _levels)"
+    "function lengthAndLevels() public view returns (uint64, uint256[][] memory)"
 ];
 const signer = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider);
 const contract = new ethers.Contract(address, ABI, signer);
 
+console.log("adding items...")
 for (let item = 1; item <= 6; item++) {
     const txResponse = await contract.add(item);
     const txReceipt = await txResponse.wait();
@@ -36,15 +37,17 @@ for (let item = 1; item <= 6; item++) {
 const length6 = await provider.getStorageAt(address, 0);
 console.assert(length6 == 6, "length should be 6");
 
-const W = 2; // TODO: load from contract
-const H = 2;
-const { _length, _levels } = await contract.lengthAndLevels();
+console.log("calling lengthAndLevels...");
+const lengthAndLevels = await contract.lengthAndLevels();
+const length = lengthAndLevels[0].toBigInt();
+const levels = lengthAndLevels[1].map((row) => row.map((v) => v.toBigInt()));
+const H = levels.length;
+const W = levels[0].length;
 
-const levels = _levels.map((row) => row.map((v) => v.toBigInt()));
 console.log("===========");
-console.log(_length);
+console.log(length);
 //console.log(_lv0Len);
-console.log(_levels);
+console.log(levels);
 
 
 /*
