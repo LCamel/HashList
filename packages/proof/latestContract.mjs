@@ -49,17 +49,20 @@ async function generateMerkleProofFromEvents(contract, W, H, itemIdx) {
     return [childrens, indexes, matchLevel];
 }
 
+async function getLatestContractAddress(provider, account) {
+    var nonce = await provider.getTransactionCount(account);
+    var address;
+    while (nonce >= 0) {
+        address = ethers.utils.getContractAddress({from: account, nonce: nonce});
+        if ((await provider.getCode(address)).length > 2) break;
+        nonce--;
+    }
+    return address;
+}
 
 const provider = new ethers.providers.JsonRpcProvider();
-const account = (await provider.listAccounts())[0]; // ?
-var nonce = await provider.getTransactionCount(account);
-var address;
-while (nonce >= 0) {
-    address = ethers.utils.getContractAddress({from: account, nonce: nonce});
-    if ((await provider.getCode(address)).length > 2) break;
-    nonce--;
-}
-console.log("address: ", address);
+const address = await getLatestContractAddress(provider, (await provider.listAccounts())[0]); // deployer
+
 
 
 const length0 = await provider.getStorageAt(address, 0);
