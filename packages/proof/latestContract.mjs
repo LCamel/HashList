@@ -1,5 +1,6 @@
 "use strict";
 import { ethers } from "ethers";
+import { poseidon } from "circomlibjs";
 import { groth16 } from "snarkjs";
 
 
@@ -31,11 +32,28 @@ const contract = new ethers.Contract(address, ABI, signer);
 
 console.log("adding items...")
 for (let item = 1; item <= 6; item++) {
+    console.log(item);
     const txResponse = await contract.add(item);
     const txReceipt = await txResponse.wait();
 }
 const length6 = await provider.getStorageAt(address, 0);
 console.assert(length6 == 6, "length should be 6");
+
+//console.log("fetching events...");
+//const filter = contract.filters.Add(0, [2, 3]);
+//const events = await contract.queryFilter(filter);
+//console.log(events.length);
+//console.log(events[0]);
+
+
+async function getEvents(lv, chStart, chEnd) { // end exclusive
+    console.log("in getEvents(): lv: ", lv, " chStart: ", chStart, " chEnd: ", chEnd);
+    const indexes = [];
+    for (let i = chStart; i < chEnd; i++) indexes.push(i);
+    const filter = contract.filters.Add(lv, indexes);
+    const events = await contract.queryFilter(filter);
+    return events.map((e) => e.args.value.toBigInt());
+}
 
 console.log("calling lengthAndLevels...");
 const lengthAndLevels = await contract.lengthAndLevels();
@@ -46,10 +64,40 @@ const W = levels[0].length;
 const lv0Len = length < 1 ? 0 : (length - 1) % W + 1;
 
 console.log("===========");
-console.log(length);
-//console.log(_lv0Len);
-console.log(levels);
+console.log("H: ", H, " W: ", W, " lv0Len: ", lv0Len);
+console.log("levels: ", levels);
 
+
+async function generateMerkleProofFromEvents(W, H, itemIdx) {
+    const ZERO = 0n;
+    const HASH = poseidon;
+
+    const childrens = [];
+    const indexes = [];
+    var lvFullIdx = itemIdx;
+    for (let lv = 0; lv < H; lv++) {
+        const chIdx = lvFullIdx % W;
+        const chStart = lvFullIdx - chIdx;
+        const events = await getEvents(lv, chStart, chStart + W);
+        console.log("events for lv: ", lv, events);
+        if (events[chIdx] === undefined) break;
+        childrens.push(Array.from({length: W}, (_, i) => i < events.length ? events[i] : ZERO));
+        indexes.push(chIdx);
+        if (events[W - 1] === undefined) break;
+        lvFullIdx = Math.floor(lvFullIdx / W);
+    }
+    if (childrens.length == 0) return undefined;
+    const matchLevel = childrens.length - 1;
+
+    // make it a Merkle proof all the way to the top
+    for (let lv = childrens.length; lv < H; lv++) {
+        childrens.push(Array.from({length: W}, (_, i) => i == 0 ? HASH(childrens[lv - 1]) : ZERO));
+        indexes.push(0);
+    }
+    return [childrens, indexes, matchLevel];
+}
+
+const [childrens, indexes, matchLevel] = await generateMerkleProofFromEvents(W, H, 1);
 
 /*
 const filter = contract.filters.Add(1);
@@ -61,27 +109,22 @@ const ZKEY = "../circuits/out/HashTower_js/HashTower_0001.zkey";
 const INPUT = {
     "lv0Len": lv0Len,
     "levels": levels,
-    "childrens": [
-        [3, 4],
-        ["42424242", "14763215145315200506921711489642608356394854266165572616578112107564877678998"]
-    ],
-    "indexes": [
-        1,
-        1
-    ],
-    "matchLevel": 1
+    "childrens": childrens,
+    "indexes": indexes,
+    "matchLevel": matchLevel
     };
 console.log("INPUT: ", INPUT);
 
-
+console.log("generating groth16.fullProve()...")
 const { proof } = await groth16.fullProve(INPUT, WASM, ZKEY);
 console.log(proof);
 
 const a = [ proof.pi_a[0], proof.pi_a[1] ];
-const b = [[ proof.pi_b[0][1], proof.pi_b[0][0] ],
+const b = [[ proof.pi_b[0][1], proof.pi_b[0][0] ], // reversed !
            [ proof.pi_b[1][1], proof.pi_b[1][0] ]];
-const c = [ proof.pi_c[0],  proof.pi_c[1] ];
+const c = [ proof.pi_c[0], proof.pi_c[1] ];
 
+console.log("calling contract.prove()...");
 const isValid = await contract.prove(a, b, c);
 console.log("isValid: " + isValid);
 
