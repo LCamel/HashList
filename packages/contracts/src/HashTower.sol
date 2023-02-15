@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 //import "hardhat/console.sol";
-import "forge-std/console.sol";
-import "./HashTowerVerifierW2H2.sol";
+//import "forge-std/console.sol";
+//import "./HashTowerVerifierW2H2.sol";
+import "./HashTowerVerifierW4H16.sol";
 
 // HACK: PROTOTYPING ONLY: use "contract" with a fixed address to avoid compiler library settings
 contract Poseidon2 {
@@ -11,11 +12,13 @@ contract Poseidon2 {
 contract Poseidon4 {
     function poseidon(uint256[4] memory) public pure returns (uint256) {}
 }
-Poseidon2 constant P = Poseidon2(0x641BC1D96C32A2F156f0c93A71aaA9f7C3e3f882); // goerli: after block 8166444
-//Poseidon4 constant P = Poseidon4(0x3b44AA63Ac599170357dC587880fC30E506612e7); // goerli: after block 8166444
+//Poseidon2 constant P = Poseidon2(0x641BC1D96C32A2F156f0c93A71aaA9f7C3e3f882); // goerli: after block 8166444
+Poseidon4 constant P = Poseidon4(0x3b44AA63Ac599170357dC587880fC30E506612e7); // goerli: after block 8166444
 
-uint8 constant W = 2;
-uint8 constant H = 2;
+//uint8 constant W = 2;
+//uint8 constant H = 2;
+uint8 constant W = 4;
+uint8 constant H = 16;
 
 contract HashTower { // PROTOTYPING ONLY: should be a library
     HashTowerVerifier private immutable verifier  = new HashTowerVerifier(); // PROTOTYPING ONLY: it should already be deployed
@@ -71,15 +74,27 @@ contract HashTower { // PROTOTYPING ONLY: should be a library
         }
         return verifier.verifyProof(a, b, c, pub);
     }
-    // since this is a "view" function, we just load all the storage slots
+    // returns a dynamic array, so the client ABI is the same for all W and H
+    // here we duplicate the "lvLen" logic to keep trailing zeros
+    // simply load all the storage will expose unwanted trailing slots
     function lengthAndLevels() public view returns (uint64, uint256[][] memory) {
         uint256[][] memory _levels = new uint256[][](H);
         for (uint8 lv = 0; lv < H; lv++) {
             _levels[lv] = new uint256[](W);
-            for (uint8 i = 0; i < W; i++) {
+        }
+
+        uint64 len = uint64(length);
+        uint64 zeroIfLessThan = 0;
+        uint64 pow = 1; // pow = W^lv
+        for (uint8 lv = 0; lv < H; lv++) {
+            zeroIfLessThan += pow; // W^0 + W^1 + W^2 ... (1 + 4 + 16 + ...)
+            uint64 lvLen = uint64((len < zeroIfLessThan) ? 0 : ((len - zeroIfLessThan) / pow) % W + 1);
+            if (lvLen == 0) break;
+            for (uint8 i = 0; i < lvLen; i++) {
                 _levels[lv][i] = levels[lv][i];
             }
+            pow *= W;
         }
-        return (uint64(length), _levels);
+        return (len, _levels);
     }
 }

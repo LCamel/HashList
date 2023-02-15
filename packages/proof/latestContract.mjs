@@ -95,17 +95,19 @@ if ((await contract.lengthAndLevels())[0].toNumber() != 0) {
 }
 
 console.log("adding items...")
-for (let i = 0; i < 6; i++) {
+for (let i = 0; i < 25; i++) {
     const item = i * 10;
     console.log("adding: ", item);
     const txResponse = await contract.add(item);
     const txReceipt = await txResponse.wait();
 
     for (let j = 0; j < i + 1; j++) {
+        console.log("trying to prove: i: ", i, " j: ", j);
         const WASM = "../circuits/out/HashTower_js/HashTower.wasm";
         const ZKEY = "../circuits/out/HashTower_js/HashTower_0001.zkey";
         const input = await generateCircuitInput(contract, j);
-
+        console.log("the input:");
+        console.log(input);
         console.log("generating groth16.fullProve()...")
         const { proof } = await groth16.fullProve(input, WASM, ZKEY);
         console.log(proof);
@@ -118,9 +120,10 @@ for (let i = 0; i < 6; i++) {
         console.log("calling contract.prove()...");
         const isValid = await contract.prove(a, b, c);
         console.log("isValid: " + isValid);
-        //const gas = await contract.estimateGas.prove(a, b, c);
-        //console.log("estimated gas: " + gas);
-        console.log("done: i: ", i, " j: ", j);
+        if (!isValid) throw "invalid!";
+        const gas = await contract.estimateGas.prove(a, b, c);
+        console.log("estimated gas: " + gas);
+        console.log("done: i: ", i, " j: ", j, "\n");
     }
 }
 process.exit(0); // quit ffjavascript workers
