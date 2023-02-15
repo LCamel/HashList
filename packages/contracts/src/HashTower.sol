@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 //import "hardhat/console.sol";
 import "forge-std/console.sol";
-import "./HashTowerVerifier.sol";
+import "./HashTowerVerifierW2H2.sol";
 
 // HACK: PROTOTYPING ONLY: use "contract" with a fixed address to avoid compiler library settings
 contract Poseidon2 {

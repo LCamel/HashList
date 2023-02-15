@@ -89,9 +89,14 @@ async function getContract() {
 const contract = await getContract();
 console.log("contract address: ", contract.address);
 
+if ((await contract.lengthAndLevels())[0].toNumber() != 0) {
+    console.log("tower is not empty");
+    process.exit(1);
+}
+
 console.log("adding items...")
 for (let i = 0; i < 6; i++) {
-    const item = i + 1;
+    const item = i * 10;
     console.log("adding: ", item);
     const txResponse = await contract.add(item);
     const txReceipt = await txResponse.wait();
