@@ -90,30 +90,32 @@ const contract = await getContract();
 console.log("contract address: ", contract.address);
 
 console.log("adding items...")
-for (let item = 1; item <= 6; item++) {
-    console.log(item);
+for (let i = 0; i < 6; i++) {
+    const item = i + 1;
+    console.log("adding: ", item);
     const txResponse = await contract.add(item);
     const txReceipt = await txResponse.wait();
+
+    for (let j = 0; j < i + 1; j++) {
+        const WASM = "../circuits/out/HashTower_js/HashTower.wasm";
+        const ZKEY = "../circuits/out/HashTower_js/HashTower_0001.zkey";
+        const input = await generateCircuitInput(contract, j);
+
+        console.log("generating groth16.fullProve()...")
+        const { proof } = await groth16.fullProve(input, WASM, ZKEY);
+        console.log(proof);
+
+        const a = [ proof.pi_a[0], proof.pi_a[1] ];
+        const b = [[ proof.pi_b[0][1], proof.pi_b[0][0] ], // reversed !
+                [ proof.pi_b[1][1], proof.pi_b[1][0] ]];
+        const c = [ proof.pi_c[0], proof.pi_c[1] ];
+
+        console.log("calling contract.prove()...");
+        const isValid = await contract.prove(a, b, c);
+        console.log("isValid: " + isValid);
+        //const gas = await contract.estimateGas.prove(a, b, c);
+        //console.log("estimated gas: " + gas);
+        console.log("done: i: ", i, " j: ", j);
+    }
 }
-
-
-const WASM = "../circuits/out/HashTower_js/HashTower.wasm";
-const ZKEY = "../circuits/out/HashTower_js/HashTower_0001.zkey";
-const input = await generateCircuitInput(contract, 1);
-
-console.log("generating groth16.fullProve()...")
-const { proof } = await groth16.fullProve(input, WASM, ZKEY);
-console.log(proof);
-
-const a = [ proof.pi_a[0], proof.pi_a[1] ];
-const b = [[ proof.pi_b[0][1], proof.pi_b[0][0] ], // reversed !
-           [ proof.pi_b[1][1], proof.pi_b[1][0] ]];
-const c = [ proof.pi_c[0], proof.pi_c[1] ];
-
-console.log("calling contract.prove()...");
-const isValid = await contract.prove(a, b, c);
-console.log("isValid: " + isValid);
-const gas = await contract.estimateGas.prove(a, b, c);
-console.log("estimated gas: " + gas);
-
 process.exit(0); // quit ffjavascript workers
