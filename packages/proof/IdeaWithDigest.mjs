@@ -3,12 +3,12 @@ import { poseidon } from "circomlibjs";
 var FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 var R = 2n; // for polysum
 
-var W = 4;
-var L = []; // levels
-var D = []; // digests (by poseidon)
+var W = 4;  // tower width
+var L = []; // levels.  width: W  height: infinity
+var D = []; // level digests (by poseidon)
 var DD;     // digest of digests (by polysum)
 
-function add(lv, v) {
+function _add(lv, v) {
     if (lv == L.length) {           // new level
         L.push([v]);
     } else if (L[lv].length < W) {  // not full
@@ -16,8 +16,13 @@ function add(lv, v) {
     } else {                        // full
         var d = digest(L[lv]);
         L[lv] = [v];
-        add(lv + 1, d);             // tail recursion
+        _add(lv + 1, d);            // tail recursion
     }
+}
+function add(v) {
+    _add(0, v);
+    D = L.map(digest);              // each level has its own digest
+    DD = polysum(D);                // and being digested again to a single value
 }
 
 function digest(vs) {
@@ -36,8 +41,6 @@ function show() {
 }
 
 for (let i = 0n; i < 30; i++) {
-    add(0, i);
-    D = L.map(digest);
-    DD = polysum(D);
+    add(i);
     show();
 }
