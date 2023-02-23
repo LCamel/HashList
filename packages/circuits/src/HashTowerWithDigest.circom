@@ -14,6 +14,34 @@ template PickOne(N) {
     out <== mux.out[0];
 }
 
+template PickOne2D(M, N) {
+    signal input in[M][N];
+    signal input row;
+    signal input col;
+    signal output out;
+
+    component pickRow = Multiplexer(N, M); // M by N
+    for (var i = 0; i < M; i++) {
+        for (var j = 0; j < N; j++) {
+            pickRow.inp[i][j] <== in[i][j];
+        }
+    }
+    pickRow.sel <== row;
+
+    component pickCol = PickOne(N);
+    for (var j = 0; j < N; j++) {
+        pickCol.in[j] <== pickRow.out[j];
+    }
+    pickCol.sel <== col;
+
+    out <== pickCol.out;
+}
+//component main = PickOne2D(2, 3);
+/* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 1, "col": 0 } _*/ // 9
+/* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 1, "col": 2 } _*/ // 4
+/* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 0, "col": 1 } _*/ // 2
+
+
 // polysum for values of V
 //     len 0: 0
 //     len 1: + V[0] * R^1
