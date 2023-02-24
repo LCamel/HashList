@@ -25,12 +25,35 @@ function add(v) {
     DD = polysum(D);                // and being digested again to a single value
 }
 
-function digest(vs) {
-    return vs.reduce((acc, v) => !acc ? poseidon([v]) : poseidon([acc, v]), undefined);
-}
+
+
+
+// If the inputs are considered "safe":
+//   vs[0] * R^1
+// + vs[1] * R^2
+// + vs[2] * R^3
+// + vs[3] * R^4
 function polysum(vs) {
     return vs.reduce((acc, v, i) => acc + v * R ** BigInt(i + 1), 0n) % FIELD_SIZE;
 }
+// If the inputs are considered "non-safe":
+//   P1(vs[0]) * R^1
+// + P1(vs[1]) * R^2
+// + P1(vs[2]) * R^3
+// + P1(vs[3]) * R^4
+function digestByPolysumOfHashValues(vs) {
+    return polysum(vs.map((v) => poseidon([v])));
+}
+var digest = digestByPolysumOfHashValues;
+
+// If you want to be quantum-safe:
+// P1 P2 P2 P2 ...
+// P2(P2(P2(P1(vs[0]), vs[1]), vs[2]), vs[3])
+//function digestByHashes(vs) {
+//    return vs.reduce((acc, v, i) => i == 0 ? poseidon([v]) : poseidon([acc, v]), 0n);
+//}
+//var digest = digestByHashes;
+
 
 function show() {
     console.log("====");
@@ -44,3 +67,6 @@ for (let i = 0n; i < 30; i++) {
     add(i);
     show();
 }
+
+BigInt.prototype.toJSON = function() { return this.toString() }
+console.log(JSON.stringify(L.map((l) => Array.from({length: W}, (_, i) => l[i] ?? 0n))));
