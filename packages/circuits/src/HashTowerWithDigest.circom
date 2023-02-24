@@ -161,3 +161,115 @@ template CheckDigestAndPickOne(M, N, R) {
 "row": "1",
 "col": "2"
 } _*/
+
+
+template NotEqual() {
+    signal input in[2];
+    signal output out;
+
+    component isEqual = IsEqual();
+    isEqual.in[0] <== in[0];
+    isEqual.in[1] <== in[1];
+
+    out <== 1 - isEqual.out;
+}
+
+// root = in[rootLevel][idx[rootLevel]]
+// leaf = in[0][idx[0]]
+template CheckMerkleProof(M, N, R) {
+    signal input in[M][N];
+    signal input idx[M];
+    signal input rootLevel;
+    signal output root;
+    signal output leaf;
+
+    // build in[lv][idx[lv]]
+    component picked[M];
+    for (var lv = 0; lv < M; lv++) {
+        picked[lv] = PickOne(N);
+        for (var i = 0; i < N; i++) {
+            picked[lv].in[i] <== in[lv][i];
+        }
+        picked[lv].sel <== idx[lv];
+    }
+    // build digest(in[lv])
+    component lvDigest[M];
+    for (var lv = 0; lv < M; lv++) {
+        lvDigest[lv] = HashThenPolysum(N, R);
+        for (var i = 0; i < N; i++) {
+            lvDigest[lv].in[i] <== in[lv][i];
+        }
+        lvDigest[lv].len <== N;
+    }
+
+    // picked value should be the digest of the level below it  for all levels from 1 to rootLevel
+    // i.e. in[lv][idx[lv]] == digest(in[lv - 1]) for all lv in [1 .. rootLevel]
+    component le[M];
+    component ne[M];
+    signal bad[M]; // bad if lv <= rootLevel && picked[lv] != lvDigest[lv - 1]
+    bad[0] <== 0;
+    for (var lv = 1; lv < M; lv++) {
+        le[lv] = LessEqThan(6); // 2^6 = 64 levels
+        le[lv].in[0] <== lv;
+        le[lv].in[1] <== rootLevel;
+
+        ne[lv] = NotEqual();
+        ne[lv].in[0] <== picked[lv].out;
+        ne[lv].in[1] <== lvDigest[lv - 1].out;
+
+        bad[lv] <== bad[lv - 1] + le[lv].out * ne[lv].out;
+    }
+    bad[M - 1] === 0;
+
+    // now we can output the root and the leaf
+    component pickRoot = PickOne(M);
+    for (var lv = 0; lv < M; lv++) {
+        pickRoot.in[lv] <== picked[lv].out;
+    }
+    pickRoot.sel <== rootLevel;
+    root <== pickRoot.out;
+    leaf <== picked[0].out;
+}
+//component main = CheckMerkleProof(5, 4, 2);
+/* INPUT_ = {
+  "in": [
+    [
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    [
+      "15176521883146847759462839042277619920113637591507418577424386468130742696480",
+      "1916445719203123116285947996117327932726151128071905690390199660532852343657",
+      "15829171829702874085286081392374048984644930615873138232584224205894038949823",
+      "13793505976893640348357418632222763357075319929991850733709442890573913893086"
+    ],
+    [
+      "18653930126630241143636189224111212520399813625070913524850974236733224889211",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  ],
+  "idx": [
+    3,
+    2,
+    0,
+    0,
+    0
+  ],
+  "rootLevel": 2
+} _*/ // root = 18653930126630241143636189224111212520399813625070913524850974236733224889211  leaf = 11

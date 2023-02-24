@@ -8,12 +8,14 @@ var L = []; // levels.  width: W  height: infinity
 var D = []; // level digests (by poseidon)
 var DD;     // digest of digests (by polysum)
 
+var children = new Map();
 function _add(lv, v) {
     if (lv == L.length) {           // new level
         L.push([v]);
     } else if (L[lv].length < W) {  // not full
         L[lv].push(v);
     } else {                        // full
+        var tmp = L[lv].slice(); tmp.forEach((v) => children.set(v, tmp));
         var d = digest(L[lv]);
         L[lv] = [v];
         _add(lv + 1, d);            // tail recursion
@@ -68,5 +70,32 @@ for (let i = 0n; i < 30; i++) {
     show();
 }
 
+var pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
 BigInt.prototype.toJSON = function() { return this.toString() }
-console.log(JSON.stringify(L.map((l) => Array.from({length: W}, (_, i) => l[i] ?? 0n))));
+
+console.log("====\nL: ", JSON.stringify(L.map((l) => pad(l, W, 0n))));
+
+//console.log(children);
+
+var todo = 11n;
+var C = [];
+var idx = [];
+var rootLevel = 0;
+while (true) {
+    var c = children.get(todo);
+    if (c) {
+        rootLevel++;
+        C.push(c);
+        idx.push(c.indexOf(todo));
+        todo = digest(c);
+    } else {
+        C.push(pad([todo], W, 0n));
+        idx.push(0);
+        break;
+    }
+}
+var H = 5;
+C = pad(C, H, Array(W).fill(0n));
+idx = pad(idx, H, 0);
+var INPUT = { "in": C, "idx": idx, "rootLevel": rootLevel };
+console.log(JSON.stringify(INPUT, undefined, 2));
