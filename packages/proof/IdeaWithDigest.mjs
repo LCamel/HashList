@@ -6,7 +6,7 @@ var R = 2n; // for polysum
 var W = 4;  // tower width
 var L = []; // levels.  width: W  height: infinity
 var D = []; // level digests (by poseidon)
-var DD;     // digest of digests (by polysum)
+var dd;     // digest of digests (by polysum)
 
 var children = new Map();
 function _add(lv, v) {
@@ -24,7 +24,7 @@ function _add(lv, v) {
 function add(v) {
     _add(0, v);
     D = L.map(digest);              // each level has its own digest
-    DD = polysum(D);                // and being digested again to a single value
+    dd = polysum(D);                // and being digested again to a single value
 }
 
 
@@ -62,7 +62,7 @@ function show() {
     for (let i = L.length - 1; i >= 0; i--) {
         console.log(L[i].join("\t"), "\t", D[i]);
     }
-    console.log("DD: ", DD);
+    console.log("dd: ", dd);
 }
 
 for (let i = 0n; i < 30; i++) {
@@ -73,9 +73,6 @@ for (let i = 0n; i < 30; i++) {
 var pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
 BigInt.prototype.toJSON = function() { return this.toString() }
 
-console.log("====\nL: ", JSON.stringify(L.map((l) => pad(l, W, 0n))));
-
-//console.log(children);
 
 var todo = 11n;
 var C = [];
@@ -94,8 +91,14 @@ while (true) {
         break;
     }
 }
-var H = 5;
-C = pad(C, H, Array(W).fill(0n));
+
+var H = 16;
+L = pad(L, H, []);
+var len = L.map((l) => l.length);
+L = L.map((l) => pad(l, W, 0n));
+var rootIdx = L[rootLevel].indexOf(todo);
+C = pad(C, H, []).map((l) => pad(l, W, 0n));
 idx = pad(idx, H, 0);
-var INPUT = { "in": C, "idx": idx, "rootLevel": rootLevel };
+
+var INPUT = { dd, L, len, rootLevel, rootIdx, C, idx };
 console.log(JSON.stringify(INPUT, undefined, 2));
