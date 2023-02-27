@@ -25,23 +25,21 @@ function digestOfRange(vs) {
 }
 
 const N = 150;
-var t = Tower(4, digestOfRange);
-for (let i = 0; i < N; i++) {
-    t.add(i);
 
-    console.log("\n");
-    for (var lv = t.L.length - 1; lv >= 0; lv--) {
-        console.log(t.S[lv].join(" ").padStart(70).slice(-70), "#",
-            t.L[lv].map(v => v.toString().padStart(7)).join(" "));
+{
+    let t = Tower(4, digestOfRange);
+    for (let i = 0; i < N; i++) {
+        t.add(i);
+
+        console.log("\n");
+        for (var lv = t.L.length - 1; lv >= 0; lv--) {
+            console.log(t.S[lv].join(" ").padStart(70).slice(-70), "#",
+                t.L[lv].map(v => v.toString().padStart(7)).join(" "));
+        }
     }
 }
 
 const assert = (v, msg) => { if (!v) throw msg };
-//t.getCount = () => t.L.reduce((acc, l, i) => acc + l.length * t.W ** i, 0);
-//const count = t.getCount();
-//console.log("count: ", count);
-//assert(count == N, "bad count");
-
 
 // given a single number "count", can we reconstruct the shape of L ?
 function getFullLengths(count, W) {
@@ -54,21 +52,23 @@ function getFullLengths(count, W) {
     return FL;
 }
 
-t = Tower(4, digestOfRange);
-for (let i = 0; i < N; i++) {
-    t.add(i);
+{
+    let t = Tower(4, digestOfRange);
+    for (let i = 0; i < N; i++) {
+        t.add(i);
 
-    let FL = getFullLengths(i + 1, t.W);
-    assert(FL.length == t.L.length, "bad FL.length");
-    for (let lv = 0; lv < t.L.length; lv++) {
-        let fl = FL[lv];
-        assert(fl == t.S[lv].length + t.L[lv].length, "bad fl");
+        let FL = getFullLengths(i + 1, t.W);
+        assert(FL.length == t.L.length, "bad FL.length");
+        for (let lv = 0; lv < t.L.length; lv++) {
+            let fl = FL[lv];
+            assert(fl == t.S[lv].length + t.L[lv].length, "bad fl");
 
-        let ll = (fl - 1) % t.W + 1;
-        assert(ll == t.L[lv].length, "bad ll");
+            let ll = (fl - 1) % t.W + 1;
+            assert(ll == t.L[lv].length, "bad ll");
 
-        let start = fl - ll;
-        assert(start * t.W ** lv == t.L[lv].flat()[0], "bad start");
+            let start = fl - ll;
+            assert(start * t.W ** lv == t.L[lv].flat()[0], "bad start");
+        }
     }
 }
 
@@ -107,17 +107,20 @@ function DigestTower(W, incDigest) {
     return { W, incDigest, D, E, add };
 }
 
-t = Tower(4, digestOfRange);
-var dt = DigestTower(4, incDigestOfRange);
-for (let i = 0; i < N; i++) {
-    t.add(i);
-    dt.add(i);
+{
+    // the digest of incremental version should match with the original version
+    let t = Tower(4, digestOfRange);
+    let dt = DigestTower(4, incDigestOfRange);
+    for (let i = 0; i < N; i++) {
+        t.add(i);
+        dt.add(i);
 
-    assert(dt.D.length == t.L.length, "bad dt.D.length");
-    for (let lv = 0; lv < t.L.length; lv++) {
-        assert(dt.D[lv].toString() ==
-                t.L[lv].reduce(incDigestOfRange, undefined).toString(), "bad dt.D[lv]");
+        assert(dt.D.length == t.L.length, "bad dt.D.length");
+        for (let lv = 0; lv < t.L.length; lv++) {
+            assert(dt.D[lv].toString() ==
+                    t.L[lv].reduce(incDigestOfRange, undefined).toString(), "bad dt.D[lv]");
+        }
     }
+    //console.log(dt.D);
+    //console.log(dt.E);
 }
-//console.log(dt.D);
-//console.log(dt.E);
