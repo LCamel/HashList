@@ -107,6 +107,14 @@ function DigestTower(W, incDigest) {
     return { W, incDigest, D, E, add };
 }
 
+function buildL(count, W, E) {
+    let FL = getFullLengths(count, W);
+    return FL.map((fl, lv) => {
+        let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+        return E[lv].slice(fl - ll, fl - ll + W);
+    });
+}
+
 {
     // the digest of incremental version should match with the original version
     let t = Tower(4, digestOfRange);
@@ -120,7 +128,8 @@ function DigestTower(W, incDigest) {
             assert(dt.D[lv].toString() ==
                     t.L[lv].reduce(incDigestOfRange, undefined).toString(), "bad dt.D[lv]");
         }
+
+        // let's reconstruct L from E by count
+        assert(JSON.stringify(buildL(i + 1, dt.W, dt.E)) == JSON.stringify(t.L), "bad buildL");
     }
-    //console.log(dt.D);
-    //console.log(dt.E);
 }
