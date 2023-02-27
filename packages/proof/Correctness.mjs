@@ -44,35 +44,30 @@ const assert = (v, msg) => { if (!v) throw msg };
 
 
 // given a single number "count", can we reconstruct the shape of L ?
-function getShape(count) {
-    const FL = []; // full length
-    const LL = []; // level length
-    const START = []; // full level index of the first elements of each level
+function getFullLengths(count, W) {
+    const FL = [];
     for (let lv = 0, z = 0; true; lv++) {
-        z += t.W ** lv;
+        z += W ** lv;
         if (count < z) break;
-        let fl = Math.floor((count - z) / t.W ** lv) + 1;
-        let ll = (fl - 1) % t.W + 1;
-        let start = fl - ll;
-        FL.push(fl);
-        LL.push(ll);
-        START.push(start);
+        FL.push(Math.floor((count - z) / W ** lv) + 1);
     }
-    return [FL, LL, START];
+    return FL;
 }
 
 t = Tower(4, digestOfRange);
 for (let i = 0; i < N; i++) {
     t.add(i);
 
-    let [FL, LL, START] = getShape(i + 1);
+    let FL = getFullLengths(i + 1, t.W);
+    assert(FL.length == t.L.length, "bad FL.length");
     for (let lv = 0; lv < t.L.length; lv++) {
-        assert(FL[lv] == t.S[lv].length + t.L[lv].length, "bad FL");
-        assert(LL[lv] == t.L[lv].length, "bad LL");
-        assert(START[lv] * t.W ** lv == t.L[lv].flat()[0], "bad START");
+        let fl = FL[lv];
+        assert(fl == t.S[lv].length + t.L[lv].length, "bad fl");
+
+        let ll = (fl - 1) % t.W + 1;
+        assert(ll == t.L[lv].length, "bad ll");
+
+        let start = fl - ll;
+        assert(start * t.W ** lv == t.L[lv].flat()[0], "bad start");
     }
 }
-
-//console.log("FL: ", FL);
-//console.log("LL: ", LL);
-//console.log("START: ", START);
