@@ -71,3 +71,53 @@ for (let i = 0; i < N; i++) {
         assert(start * t.W ** lv == t.L[lv].flat()[0], "bad start");
     }
 }
+
+// we are going to replace levels L[][] with digests D[]
+
+function incDigestOfRange(orig, v, i) {
+    var arr = i == 0 ? [v].flat() : [orig, v].flat();
+    return [arr.at(0), arr.at(-1)];
+}
+function DigestTower(W, incDigest) {
+    let count = 0;
+    let D = []; // digests
+    let E = []; // events
+    function add(toAdd) {
+        for (let lv = 0, z = 0; true; lv++) {
+            z += W ** lv;
+            let fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
+            let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+
+            if (ll == 0) E[lv] = [];
+            E[lv][fl] = toAdd;
+            if (ll == 0) {        // new level
+                D[lv] = incDigest(undefined, toAdd, 0);
+                break;
+            } else if (ll < W) {  // not full
+                D[lv] = incDigest(D[lv], toAdd, ll);
+                break;
+            } else {              // full
+                let tmp = D[lv];
+                D[lv] = incDigest(undefined, toAdd, 0);
+                toAdd = tmp;
+            }
+        }
+        count++;
+    }
+    return { W, incDigest, D, E, add };
+}
+
+t = Tower(4, digestOfRange);
+var dt = DigestTower(4, incDigestOfRange);
+for (let i = 0; i < N; i++) {
+    t.add(i);
+    dt.add(i);
+
+    assert(dt.D.length == t.L.length, "bad dt.D.length");
+    for (let lv = 0; lv < t.L.length; lv++) {
+        assert(dt.D[lv].toString() ==
+                t.L[lv].reduce(incDigestOfRange, undefined).toString(), "bad dt.D[lv]");
+    }
+}
+//console.log(dt.D);
+//console.log(dt.E);
