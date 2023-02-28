@@ -38,7 +38,7 @@ console.log("==== CoreTower ====");
     }
 }
 
-// Add S. Keep L the same.
+// Add shifted levels S.  Keep L the same.
 function Tower(W, digest) {
     let S = []; // shifted levels
     let L = []; // levels[][W]
@@ -151,28 +151,23 @@ function buildL(count, W, E) {
         return E[lv].slice(start, start + W);
     });
 }
-function buildProof(count, W, E, idx) {
-    let C = [];
-    let CI = [];
+// keep finding shifted childrens until we enter the tower
+function buildMerkleProof(count, W, E, idx) {
+    let C = []; // children
+    let CI = []; // children index
     if (idx >= count) return [C, CI];
     let [FL, LL] = getLengths(count, W);
     for (let lv = 0; true; lv++) {
-        let start = FL[lv] - LL[lv];
-        if (idx >= start) {
-            C.push(E[lv].slice(start, start + LL[lv]));
-            CI.push(idx - start);
-            break;
-        } else {
-            var s = idx - idx % W;
-            C.push(E[lv].slice(s, s + W));
-            CI.push(idx - s);
-        }
+        let start = idx - idx % W;
+        C.push(E[lv].slice(start, start + W)); // less than W is OK
+        CI.push(idx - start);
+        if (start == FL[lv] - LL[lv]) break;
         idx = Math.floor(idx / W);
     }
     return [C, CI];
 }
 
-function verifyProof(C, CI, root, incDigest) {
+function verifyMerkleProof(C, CI, root, incDigest) {
     for (let lv = 1; lv < C.length; lv++) {
         assertEq(C[lv][CI[lv]], C[lv - 1].reduce(incDigest, undefined), "inconsistent proof");
     }
@@ -193,7 +188,7 @@ function verifyProof(C, CI, root, incDigest) {
             assertEq(dt.D[lv], t.L[lv].reduce(incDigestOfRange, undefined), "bad dt.D[lv]");
         }
 
-        // let's reconstruct L from E by count
+        // let's reconstruct L from E by count and verify it
         let count = i + 1;
         let L = buildL(count, dt.W, dt.E);
         assertEq(L, t.L, "bad buildL");
@@ -201,15 +196,15 @@ function verifyProof(C, CI, root, incDigest) {
         // all index [0 .. i] should be provable
         for (let j = 0; j <= i; j++) {
             // build a merkle proof
-            let [C, CI] = buildProof(count, dt.W, dt.E, j);
+            let [C, CI] = buildMerkleProof(count, dt.W, dt.E, j);
 
             // the proof is self-consistent and match with a in-tower root
             let root = L[CI.length - 1][CI.at(-1)];
-            verifyProof(C, CI, root, incDigestOfRange);
+            verifyMerkleProof(C, CI, root, incDigestOfRange);
         }
 
         // index i + 1 should not be provable
-        let [C, CI] = buildProof(count, dt.W, dt.E, i + 1);
+        let [C, CI] = buildMerkleProof(count, dt.W, dt.E, i + 1);
         assert(C.length == 0, "bad C.length");
         assert(CI.length == 0, "bad CI.length");
     }
