@@ -207,5 +207,10 @@ function verifyProof(C, CI, root, incDigest) {
             let root = L[CI.length - 1][CI.at(-1)];
             verifyProof(C, CI, root, incDigestOfRange);
         }
+
+        // index i + 1 should not be provable
+        let [C, CI] = buildProof(count, dt.W, dt.E, i + 1);
+        assert(C.length == 0, "bad C.length");
+        assert(CI.length == 0, "bad CI.length");
     }
 }
