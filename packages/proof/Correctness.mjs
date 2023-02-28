@@ -78,8 +78,8 @@ const assertEq = (v1, v2, msg) => assert(JSON.stringify(v1) == JSON.stringify(v2
 
 // Given a single number "count", can we reconstruct the "shape" of L and S ?
 function getLengths(count, W) {
-    let FL = [];
-    let LL = [];
+    let FL = []; // full level lengths (S + L)
+    let LL = []; // level lengths (L)
     for (let lv = 0, z = 0; true; lv++) {
         z += W ** lv;
         if (count < z) break;
@@ -94,12 +94,13 @@ function getLengths(count, W) {
     let t = Tower(4, digestOfRange);
     for (let i = 0; i < N; i++) {
         t.add(i);
-        let [FL, LL] = getLengths(i + 1, t.W);
+        let count = i + 1;
+        let [FL, LL] = getLengths(count, t.W);
         assert(FL.length == t.L.length, "bad FL.length");
         assert(LL.length == t.L.length, "bad LL.length");
         for (let lv = 0; lv < t.L.length; lv++) {
             assert(FL[lv] == t.S[lv].length + t.L[lv].length, "bad fl");
-            assert(LL[lv] == t.L[lv].length, "bad ll");
+            assert(LL[lv] ==                  t.L[lv].length, "bad ll");
             assert((FL[lv] - LL[lv]) * t.W ** lv == t.L[lv].flat()[0], "bad start");
         }
     }
@@ -115,8 +116,8 @@ function incDigestOfRange(orig, v, i) {
 }
 function DigestTower(W, incDigest) {
     let count = 0;
-    let D = []; // digests
-    let E = []; // events
+    let D = []; // level digests
+    let E = []; // events (S + L)
     function add(toAdd) {
         for (let lv = 0, z = 0; true; lv++) {
             // inlined length computations
@@ -186,20 +187,24 @@ function verifyProof(C, CI, root, incDigest) {
         t.add(i);
         dt.add(i);
 
+        // verify D
         assert(dt.D.length == t.L.length, "bad dt.D.length");
         for (let lv = 0; lv < t.L.length; lv++) {
             assertEq(dt.D[lv], t.L[lv].reduce(incDigestOfRange, undefined), "bad dt.D[lv]");
         }
 
         // let's reconstruct L from E by count
-        assertEq(buildL(i + 1, dt.W, dt.E), t.L, "bad buildL");
+        let count = i + 1;
+        let L = buildL(count, dt.W, dt.E);
+        assertEq(L, t.L, "bad buildL");
 
-        // and build a merkle proof
-        let [C, CI] = buildProof(i + 1, dt.W, dt.E, 101);
+        // all index [0 .. i] should be provable
+        for (let j = 0; j <= i; j++) {
+            // build a merkle proof
+            let [C, CI] = buildProof(count, dt.W, dt.E, j);
 
-        // the proof is self-consistent and match with a in-tower root
-        if (C.length) {
-            let root = t.L[CI.length - 1][CI.at(-1)];
+            // the proof is self-consistent and match with a in-tower root
+            let root = L[CI.length - 1][CI.at(-1)];
             verifyProof(C, CI, root, incDigestOfRange);
         }
     }
