@@ -40,6 +40,7 @@ const N = 150;
 }
 
 const assert = (v, msg) => { if (!v) throw msg };
+const assertEq = (v1, v2, msg) => assert(JSON.stringify(v1) == JSON.stringify(v2), msg);
 
 // given a single number "count", can we reconstruct the shape of L ?
 function getFullLengths(count, W) {
@@ -136,17 +137,16 @@ function buildProof(count, W, E, idx) {
     }
     return [C, CI];
 }
-const deepEq = (a, b) => JSON.stringify(a) == JSON.stringify(b);
 
 function verifyProof(C, CI, root, incDigest) {
     for (let lv = 1; lv < C.length; lv++) {
-        assert(deepEq(C[lv][CI[lv]],
-            C[lv - 1].reduce(incDigest, undefined)), "inconsistent proof");
+        assertEq(C[lv][CI[lv]], C[lv - 1].reduce(incDigest, undefined), "inconsistent proof");
     }
-    assert(deepEq(C.at(-1)[CI.at(-1)], root), "root mismatch");
+    assertEq(C.at(-1)[CI.at(-1)], root, "root mismatch");
 }
+
 {
-    // the digest of incremental version should match with the original version
+    // the digest version should match with the original version
     let t = Tower(4, digestOfRange);
     let dt = DigestTower(4, incDigestOfRange);
     for (let i = 0; i < N; i++) {
@@ -155,13 +155,11 @@ function verifyProof(C, CI, root, incDigest) {
 
         assert(dt.D.length == t.L.length, "bad dt.D.length");
         for (let lv = 0; lv < t.L.length; lv++) {
-            assert(dt.D[lv].toString() ==
-                    t.L[lv].reduce(incDigestOfRange, undefined).toString(), "bad dt.D[lv]");
+            assertEq(dt.D[lv], t.L[lv].reduce(incDigestOfRange, undefined), "bad dt.D[lv]");
         }
 
         // let's reconstruct L from E by count
-        assert(JSON.stringify(buildL(i + 1, dt.W, dt.E)) ==
-               JSON.stringify(t.L), "bad buildL");
+        assertEq(buildL(i + 1, dt.W, dt.E), t.L, "bad buildL");
 
         // and build a merkle proof
         let [C, CI] = buildProof(i + 1, dt.W, dt.E, 101);
