@@ -114,7 +114,37 @@ function buildL(count, W, E) {
         return E[lv].slice(fl - ll, fl - ll + W);
     });
 }
+function buildProof(count, W, E, idx) {
+    let C = [];
+    let CI = [];
+    if (idx >= count) return [C, CI];
+    let FL = getFullLengths(count, W);
+    for (let lv = 0; true; lv++) {
+        let fl = FL[lv];
+        let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+        let start = fl - ll;
+        if (idx >= start && idx < fl) {
+            C.push(E[lv].slice(start, start + ll));
+            CI.push(idx - start);
+            break;
+        } else {
+            var s = idx - idx % W;
+            C.push(E[lv].slice(s, s + W));
+            CI.push(idx - s);
+        }
+        idx = Math.floor(idx / W);
+    }
+    return [C, CI];
+}
+const deepEq = (a, b) => JSON.stringify(a) == JSON.stringify(b);
 
+function verifyProof(C, CI, root, incDigest) {
+    for (let lv = 1; lv < C.length; lv++) {
+        assert(deepEq(C[lv][CI[lv]],
+            C[lv - 1].reduce(incDigest, undefined)), "inconsistent proof");
+    }
+    assert(deepEq(C.at(-1)[CI.at(-1)], root), "root mismatch");
+}
 {
     // the digest of incremental version should match with the original version
     let t = Tower(4, digestOfRange);
@@ -130,6 +160,16 @@ function buildL(count, W, E) {
         }
 
         // let's reconstruct L from E by count
-        assert(JSON.stringify(buildL(i + 1, dt.W, dt.E)) == JSON.stringify(t.L), "bad buildL");
+        assert(JSON.stringify(buildL(i + 1, dt.W, dt.E)) ==
+               JSON.stringify(t.L), "bad buildL");
+
+        // and build a merkle proof
+        let [C, CI] = buildProof(i + 1, dt.W, dt.E, 101);
+
+        // the proof is self-consistent and match with a in-tower root
+        if (C.length) {
+            let root = t.L[CI.length - 1][CI.at(-1)];
+            verifyProof(C, CI, root, incDigestOfRange);
+        }
     }
 }
