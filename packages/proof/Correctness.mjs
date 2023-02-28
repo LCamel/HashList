@@ -76,37 +76,39 @@ console.log("==== Tower ====");
 const assert = (v, msg) => { if (!v) throw msg };
 const assertEq = (v1, v2, msg) => assert(JSON.stringify(v1) == JSON.stringify(v2), msg);
 
-// Given a single number "count", can we reconstruct the shape of L ?
-function getFullLengths(count, W) {
-    const FL = [];
+// Given a single number "count", can we reconstruct the "shape" of L and S ?
+function getLengths(count, W) {
+    let FL = [];
+    let LL = [];
     for (let lv = 0, z = 0; true; lv++) {
         z += W ** lv;
         if (count < z) break;
-        FL.push(Math.floor((count - z) / W ** lv) + 1);
+        let fl = Math.floor((count - z) / W ** lv) + 1
+        FL.push(fl);
+        LL.push((fl - 1) % W + 1);
     }
-    return FL;
+    return [FL, LL];
 }
 {
+    // check getLengths()
     let t = Tower(4, digestOfRange);
     for (let i = 0; i < N; i++) {
         t.add(i);
-
-        let FL = getFullLengths(i + 1, t.W);
+        let [FL, LL] = getLengths(i + 1, t.W);
         assert(FL.length == t.L.length, "bad FL.length");
+        assert(LL.length == t.L.length, "bad LL.length");
         for (let lv = 0; lv < t.L.length; lv++) {
-            let fl = FL[lv];
-            assert(fl == t.S[lv].length + t.L[lv].length, "bad fl");
-
-            let ll = (fl - 1) % t.W + 1;
-            assert(ll == t.L[lv].length, "bad ll");
-
-            let start = fl - ll;
-            assert(start * t.W ** lv == t.L[lv].flat()[0], "bad start");
+            assert(FL[lv] == t.S[lv].length + t.L[lv].length, "bad fl");
+            assert(LL[lv] == t.L[lv].length, "bad ll");
+            assert((FL[lv] - LL[lv]) * t.W ** lv == t.L[lv].flat()[0], "bad start");
         }
     }
 }
 
-// we are going to replace levels L[][] with incrementally-built digests D[]
+// Since we can derive the "shape" of L and S from count,
+// we can use events to store them and restore them later.
+// L is summarized by the incrementally-built digests D[].
+// A prover must collect the right events to pass the digest check.
 function incDigestOfRange(orig, v, i) {
     var arr = i == 0 ? [v].flat() : [orig, v].flat();
     return [arr.at(0), arr.at(-1)];
@@ -142,23 +144,21 @@ function DigestTower(W, incDigest) {
 }
 
 function buildL(count, W, E) {
-    let FL = getFullLengths(count, W);
+    let [FL, LL] = getLengths(count, W);
     return FL.map((fl, lv) => {
-        let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
-        return E[lv].slice(fl - ll, fl - ll + W);
+        let start = fl - LL[lv];
+        return E[lv].slice(start, start + W);
     });
 }
 function buildProof(count, W, E, idx) {
     let C = [];
     let CI = [];
     if (idx >= count) return [C, CI];
-    let FL = getFullLengths(count, W);
+    let [FL, LL] = getLengths(count, W);
     for (let lv = 0; true; lv++) {
-        let fl = FL[lv];
-        let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
-        let start = fl - ll;
-        if (idx >= start && idx < fl) {
-            C.push(E[lv].slice(start, start + ll));
+        let start = FL[lv] - LL[lv];
+        if (idx >= start) {
+            C.push(E[lv].slice(start, start + LL[lv]));
             CI.push(idx - start);
             break;
         } else {
