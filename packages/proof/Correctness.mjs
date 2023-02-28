@@ -1,7 +1,47 @@
 "use strict";
+
+function CoreTower(W, digest) {
+    let L = []; // levels[][W]
+    function _add(lv, v) {
+        if (lv == L.length) {          // new level
+            L[lv] = [v];
+        } else if (L[lv].length < W) { // not full
+            L[lv].push(v);
+        } else {                       // full
+            const d = digest(L[lv]);
+            L[lv] = [v];
+            _add(lv + 1, d);           // up
+        }
+    }
+    let add = (item) => _add(0, item);
+    return { W, digest, L, add };
+}
+
+// [4, 5, 6, 7] => [4, 7]
+// [[16,19], [20,23], [24,27], [28,31]] => [16, 31]
+function digestOfRange(vs) {
+    var arr = vs.flat();
+    return [ arr.at(0), arr.at(-1) ];
+}
+
+const N = 150;
+
+console.log("==== CoreTower ====");
+{
+    let t = CoreTower(4, digestOfRange);
+    for (let i = 0; i < N; i++) {
+        t.add(i);
+        console.log("====");
+        for (let lv = t.L.length - 1; lv >= 0; lv--) {
+            console.log(t.L[lv].join('\t'));
+        }
+    }
+}
+
+// Add S. Keep L the same.
 function Tower(W, digest) {
     let S = []; // shifted levels
-    let L = []; // levels
+    let L = []; // levels[][W]
     function _add(lv, v) {
         if (lv == L.length) {          // new level
             S[lv] = [];
@@ -19,22 +59,16 @@ function Tower(W, digest) {
     return { W, digest, L, S, add };
 }
 
-function digestOfRange(vs) {
-    var arr = vs.flat();
-    return [ arr.at(0), arr.at(-1) ];
-}
-
-const N = 150;
-
+console.log("==== Tower ====");
 {
+    const fmt = (v, l) => ("" + v).padStart(l).slice(-l);
+    const fmtl = (vs, l) => vs.map(v => fmt(v, l)).join(" ");
     let t = Tower(4, digestOfRange);
     for (let i = 0; i < N; i++) {
         t.add(i);
-
         console.log("\n");
         for (var lv = t.L.length - 1; lv >= 0; lv--) {
-            console.log(t.S[lv].join(" ").padStart(70).slice(-70), "#",
-                t.L[lv].map(v => v.toString().padStart(7)).join(" "));
+            console.log(fmt(fmtl(t.S[lv], 7), 70), "#", fmtl(t.L[lv], 7));
         }
     }
 }
@@ -42,7 +76,7 @@ const N = 150;
 const assert = (v, msg) => { if (!v) throw msg };
 const assertEq = (v1, v2, msg) => assert(JSON.stringify(v1) == JSON.stringify(v2), msg);
 
-// given a single number "count", can we reconstruct the shape of L ?
+// Given a single number "count", can we reconstruct the shape of L ?
 function getFullLengths(count, W) {
     const FL = [];
     for (let lv = 0, z = 0; true; lv++) {
@@ -52,7 +86,6 @@ function getFullLengths(count, W) {
     }
     return FL;
 }
-
 {
     let t = Tower(4, digestOfRange);
     for (let i = 0; i < N; i++) {
@@ -73,8 +106,7 @@ function getFullLengths(count, W) {
     }
 }
 
-// we are going to replace levels L[][] with digests D[]
-
+// we are going to replace levels L[][] with incrementally-built digests D[]
 function incDigestOfRange(orig, v, i) {
     var arr = i == 0 ? [v].flat() : [orig, v].flat();
     return [arr.at(0), arr.at(-1)];
@@ -85,12 +117,13 @@ function DigestTower(W, incDigest) {
     let E = []; // events
     function add(toAdd) {
         for (let lv = 0, z = 0; true; lv++) {
+            // inlined length computations
             z += W ** lv;
             let fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
             let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
 
             if (ll == 0) E[lv] = [];
-            E[lv][fl] = toAdd;
+            E[lv][fl] = toAdd;    // emit event
             if (ll == 0) {        // new level
                 D[lv] = incDigest(undefined, toAdd, 0);
                 break;
