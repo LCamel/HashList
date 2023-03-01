@@ -185,10 +185,10 @@ function verifyMerkleProof(C, CI, root, incDigest) {
         // verify D
         assert(dt.D.length == t.L.length, "bad dt.D.length");
         for (let lv = 0; lv < t.L.length; lv++) {
-            assertEq(dt.D[lv], t.L[lv].reduce(incDigestOfRange, undefined), "bad dt.D[lv]");
+            assertEq(dt.D[lv], t.L[lv].reduce(dt.incDigest, undefined), "bad dt.D[lv]");
         }
 
-        // let's reconstruct L from E by count and verify it
+        // reconstruct L from E by "count"
         let count = i + 1;
         let L = buildL(count, dt.W, dt.E);
         assertEq(L, t.L, "bad buildL");
@@ -198,9 +198,9 @@ function verifyMerkleProof(C, CI, root, incDigest) {
             // build a merkle proof
             let [C, CI] = buildMerkleProof(count, dt.W, dt.E, j);
 
-            // the proof is self-consistent and match with a in-tower root
+            // the proof is self-consistent and match with an in-tower root
             let root = L[CI.length - 1][CI.at(-1)];
-            verifyMerkleProof(C, CI, root, incDigestOfRange);
+            verifyMerkleProof(C, CI, root, dt.incDigest);
         }
 
         // index i + 1 should not be provable
