@@ -73,7 +73,7 @@ if (IS_MAIN) {
     const W = 4;
     const N = 150;
 
-
+    // verify PolysumTower
     let t = CoreTower(W, digestByPolysumOfHashValues);
     let pt = PolysumTower(W, P1, R);
     for (let i = 0n; i < N; i++) {
@@ -84,21 +84,20 @@ if (IS_MAIN) {
         assert(pt.dd == polysum(pt.D), "bad pt.dd");
     }
 
-
-    var pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
+    // generate the circuit input
+    let pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
 
     let H = 16;
     let L = buildL(pt.count, W, pt.E);
-    L = pad(L, H, []);
-    let len = L.map((l) => l.length);
-    L = L.map((l) => pad(l, W, 0n));
-    let [C, idx] = buildMerkleProof(pt.count, W, pt.E, 10);
+    let LL = pad(L.map((l) => l.length), H, 0n);
+    L = pad(L, H, []).map((l) => pad(l, W, 0n));
+    let [C, CI] = buildMerkleProof(pt.count, W, pt.E, 10);
     let rootLevel = C.length - 1;
-    let rootIdx = idx.at(-1);
+    let rootIdx = CI.at(-1);
     C = pad(C, H, []).map((c) => pad(c, W, 0n));
-    idx = pad(idx, H, 0n);
+    CI = pad(CI, H, 0n);
 
-    var INPUT = { dd: pt.dd, L, len, rootLevel, rootIdx, C, idx };
+    let INPUT = { dd: pt.dd, L, LL, rootLevel, rootIdx, C, CI };
     console.log(JSON.stringify(INPUT));
 }
 

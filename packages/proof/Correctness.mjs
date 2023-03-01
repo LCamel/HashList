@@ -154,7 +154,7 @@ function buildL(count, W, E) {
     let [FL, LL] = getLengths(count, W);
     return FL.map((fl, lv) => {
         let start = fl - LL[lv];
-        return E[lv].slice(start, start + W);
+        return E[lv].slice(start, start + W); // less than W is OK
     });
 }
 // keep finding shifted childrens until we enter the tower
@@ -167,7 +167,7 @@ function buildMerkleProof(count, W, E, idx) {
         let start = idx - idx % W;
         C.push(E[lv].slice(start, start + W)); // less than W is OK
         CI.push(idx - start);
-        if (start == FL[lv] - LL[lv]) break;
+        if (start == FL[lv] - LL[lv]) break; // we are in the tower now
         idx = Math.floor(idx / W);
     }
     return [C, CI];
