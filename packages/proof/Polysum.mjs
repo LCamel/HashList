@@ -1,5 +1,5 @@
 import { poseidon } from "circomlibjs";
-import { CoreTower, assert, assertEq } from "./Correctness.mjs";
+import { CoreTower, buildL, buildMerkleProof, assert, assertEq } from "./Correctness.mjs";
 const FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 
 function PolysumTower(W, P1, R) {
@@ -39,7 +39,7 @@ function PolysumTower(W, P1, R) {
         dd = dd1;
         count++;
     }
-    return { W, D, get dd() { return dd }, add };
+    return { W, D, E, add, get count() { return count }, get dd() { return dd } };
 }
 
 
@@ -70,16 +70,36 @@ const IS_MAIN = true;
 if (IS_MAIN) {
     BigInt.prototype.toJSON = function() { return this.toString() } // for JSON.stringify in assertEq
 
+    const W = 4;
     const N = 150;
 
-    let t = CoreTower(4, digestByPolysumOfHashValues);
-    let pt = PolysumTower(4, P1, R);
+
+    let t = CoreTower(W, digestByPolysumOfHashValues);
+    let pt = PolysumTower(W, P1, R);
     for (let i = 0n; i < N; i++) {
         t.add(i);
         pt.add(i);
         assert(pt.D.length == t.L.length, "bad pt.D.length");
         assertEq(pt.D, t.L.map(t.digest), "bad pt.D");
-        assertEq(pt.dd, polysum(pt.D), "bad pt.dd");
+        assert(pt.dd == polysum(pt.D), "bad pt.dd");
     }
+
+
+    var pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
+
+    let H = 16;
+    let L = buildL(pt.count, W, pt.E);
+    L = pad(L, H, []);
+    let len = L.map((l) => l.length);
+    L = L.map((l) => pad(l, W, 0n));
+    let [C, idx] = buildMerkleProof(pt.count, W, pt.E, 10);
+    let rootLevel = C.length - 1;
+    let rootIdx = idx.at(-1);
+    C = pad(C, H, []).map((c) => pad(c, W, 0n));
+    idx = pad(idx, H, 0n);
+
+    var INPUT = { dd: pt.dd, L, len, rootLevel, rootIdx, C, idx };
+    console.log(JSON.stringify(INPUT));
 }
-console.log("done");
+
+

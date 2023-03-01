@@ -217,4 +217,4 @@ if (IS_MAIN)
     }
 }
 
-export { CoreTower, assert, assertEq };
+export { CoreTower, buildL, buildMerkleProof, assert, assertEq };
