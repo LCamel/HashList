@@ -17,6 +17,7 @@ function CoreTower(W, digest) {
     return { W, digest, L, add };
 }
 
+// digest of continuous index range (for visualization)
 // [4, 5, 6, 7] => [4, 7]
 // [[16,19], [20,23], [24,27], [28,31]] => [16, 31]
 function digestOfRange(vs) {
@@ -24,10 +25,12 @@ function digestOfRange(vs) {
     return [ arr.at(0), arr.at(-1) ];
 }
 
+const IS_MAIN = false;
 const N = 150;
 
-console.log("==== CoreTower ====");
+if (IS_MAIN)
 {
+    console.log("==== CoreTower ====");
     let t = CoreTower(4, digestOfRange);
     for (let i = 0; i < N; i++) {
         t.add(i);
@@ -40,7 +43,7 @@ console.log("==== CoreTower ====");
 
 // Add shifted levels S.  Keep L the same.
 function Tower(W, digest) {
-    let S = []; // shifted levels
+    let S = []; // shifted levels (events)
     let L = []; // levels[][W]
     function _add(lv, v) {
         if (lv == L.length) {          // new level
@@ -59,8 +62,9 @@ function Tower(W, digest) {
     return { W, digest, L, S, add };
 }
 
-console.log("==== Tower ====");
+if (IS_MAIN)
 {
+    console.log("==== Tower ====");
     const fmt = (v, l) => ("" + v).padStart(l).slice(-l);
     const fmtl = (vs, l) => vs.map(v => fmt(v, l)).join(" ");
     let t = Tower(4, digestOfRange);
@@ -89,6 +93,8 @@ function getLengths(count, W) {
     }
     return [FL, LL];
 }
+
+if (IS_MAIN)
 {
     // check getLengths()
     let t = Tower(4, digestOfRange);
@@ -108,7 +114,7 @@ function getLengths(count, W) {
 
 // Since we can derive the "shape" of L and S from count,
 // we can use events to store them and restore them later.
-// L is summarized by the incrementally-built digests D[].
+// L is summarized and fixed by the incrementally-built digests D[].
 // A prover must collect the right events to pass the digest check.
 function incDigestOfRange(orig, v, i) {
     var arr = i == 0 ? [v].flat() : [orig, v].flat();
@@ -117,7 +123,7 @@ function incDigestOfRange(orig, v, i) {
 function DigestTower(W, incDigest) {
     let count = 0;
     let D = []; // level digests
-    let E = []; // events (S + L)
+    let E = []; // events (S + L) for each level
     function add(toAdd) {
         for (let lv = 0, z = 0; true; lv++) {
             // inlined length computations
@@ -174,6 +180,7 @@ function verifyMerkleProof(C, CI, root, incDigest) {
     assertEq(C.at(-1)[CI.at(-1)], root, "root mismatch");
 }
 
+if (IS_MAIN)
 {
     // the digest version should match with the original version
     let t = Tower(4, digestOfRange);
@@ -209,3 +216,5 @@ function verifyMerkleProof(C, CI, root, incDigest) {
         assert(CI.length == 0, "bad CI.length");
     }
 }
+
+export { CoreTower, assert, assertEq };
