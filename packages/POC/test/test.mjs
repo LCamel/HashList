@@ -1,5 +1,6 @@
-import { strict as assert } from 'node:assert';
-import { Tower, digestOfRange, ShiftTower, getLengths } from "../src/Dev.mjs";
+//import { strict as assert } from 'node:assert';
+import { assert } from "chai";
+import { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof } from "../src/Dev.mjs";
 
 
 describe("Tower", function() {
@@ -114,6 +115,71 @@ describe("getLengths", function() {
                 assert.equal(LL[lv],                  t.L[lv].length);
                 assert.equal((FL[lv] - LL[lv]) * t.W ** lv, t.L[lv].flat()[0], "start");
             }
+        }
+    });
+});
+
+
+describe("DigestTower", function() {
+    it("should have digests that match with the original version", function() {
+        let t = Tower(4, digestOfRange);
+        let dt = DigestTower(4, incDigestOfRange);
+        for (let i = 0; i < 150; i++) {
+            t.add(i);
+            dt.add(i);
+
+            // verify D
+            assert.equal(dt.D.length, t.L.length);
+            for (let lv = 0; lv < t.L.length; lv++) {
+                assert.deepEqual(dt.D[lv], t.L[lv].reduce(dt.incDigest, undefined));
+            }
+        }
+    });
+});
+
+describe("buildL", function() {
+    it("should build L from E by 'count'", function() {
+        let t = Tower(4, digestOfRange);
+        let dt = DigestTower(4, incDigestOfRange);
+        for (let i = 0; i < 150; i++) {
+            t.add(i);
+            dt.add(i);
+
+            let count = i + 1;
+            let L = buildL(count, dt.W, dt.E);
+            assert.deepEqual(L, t.L);
+        }
+    });
+});
+
+
+describe("buildMerkleProof", function() {
+    it("should build a verifiable Merkle proof", function() {
+        let t = Tower(4, digestOfRange);
+        let dt = DigestTower(4, incDigestOfRange);
+        const eq = (a, b) => Array.isArray(a) ?
+            a.length == 2 && b.length == 2 && a[0] == b[0] && a[1] == b[1] : a == b; // for range only
+
+        for (let i = 0; i < 150; i++) {
+            t.add(i);
+            dt.add(i);
+
+            let count = i + 1;
+
+            // all index [0 .. i] should be provable
+            for (let j = 0; j <= i; j++) {
+                // build a merkle proof
+                let [C, CI] = buildMerkleProof(count, dt.W, dt.E, j);
+
+                // the proof is self-consistent and match with an in-tower root
+                let root = t.L[CI.length - 1][CI.at(-1)];
+                assert.equal(verifyMerkleProof(C, CI, root, dt.incDigest, eq), true);
+            }
+
+            // index i + 1 should not be provable
+            let [C, CI] = buildMerkleProof(count, dt.W, dt.E, i + 1);
+            assert.equal(C.length, 0);
+            assert.equal(CI.length, 0);
         }
     });
 });

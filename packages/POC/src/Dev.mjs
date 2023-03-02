@@ -60,4 +60,75 @@ function getLengths(count, W) {
     return [FL, LL];
 }
 
-export { Tower, digestOfRange, ShiftTower, getLengths };
+
+// Since we can derive the "shape" of L and S from count,
+// we can use events to store them and restore them later.
+// L is summarized and fixed by the incrementally-built digests D[].
+// A prover must collect the right events to pass the digest check.
+function incDigestOfRange(orig, v, i) {
+    var arr = i == 0 ? [v].flat() : [orig, v].flat();
+    return [arr.at(0), arr.at(-1)];
+}
+function DigestTower(W, incDigest) {
+    let count = 0;
+    let D = []; // level digests
+    let E = []; // events (S + L) for each level
+    function add(toAdd) {
+        for (let lv = 0, z = 0; true; lv++) {
+            // inlined length computations
+            z += W ** lv;
+            let fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
+            let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+
+            if (ll == 0) E[lv] = [];
+            E[lv][fl] = toAdd;    // emit event
+            if (ll == 0) {        // new level
+                D[lv] = incDigest(undefined, toAdd, 0);
+                break;
+            } else if (ll < W) {  // not full
+                D[lv] = incDigest(D[lv], toAdd, ll);
+                break;
+            } else {              // full
+                let tmp = D[lv];
+                D[lv] = incDigest(undefined, toAdd, 0);
+                toAdd = tmp;
+            }
+        }
+        count++;
+    }
+    return { W, incDigest, D, E, add };
+}
+
+function buildL(count, W, E) {
+    let [FL, LL] = getLengths(count, W);
+    return FL.map((fl, lv) => {
+        let start = fl - LL[lv];
+        return E[lv].slice(start, start + LL[lv]); // over-fetching may miss D[lv] at count
+    });
+}
+
+// keep finding shifted children for each level until we are in the tower
+function buildMerkleProof(count, W, E, idx) {
+    let C = []; // children
+    let CI = []; // children index
+    if (idx >= count) return [C, CI];
+    let [FL, LL] = getLengths(count, W);
+    for (let lv = 0; true; lv++) {
+        let start = idx - idx % W;
+        C.push(E[lv].slice(start, start + W)); // less than W or more than idx are both OK for the last level
+        CI.push(idx - start);
+        if (start == FL[lv] - LL[lv]) break; // we are in the tower now
+        idx = Math.floor(idx / W);
+    }
+    return [C, CI];
+}
+
+function verifyMerkleProof(C, CI, root, incDigest, eq) {
+    //const eq = (v1, v2) => JSON.stringify(v1) == JSON.stringify(v2);
+    for (let lv = 1; lv < C.length; lv++) {
+        if (!eq(C[lv][CI[lv]], C[lv - 1].reduce(incDigest, undefined))) return false;
+    }
+    return eq(C.at(-1)[CI.at(-1)], root);
+}
+
+export { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof };
