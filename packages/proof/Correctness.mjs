@@ -154,10 +154,10 @@ function buildL(count, W, E) {
     let [FL, LL] = getLengths(count, W);
     return FL.map((fl, lv) => {
         let start = fl - LL[lv];
-        return E[lv].slice(start, start + W); // less than W is OK
+        return E[lv].slice(start, start + LL[lv]); // over-fetching may miss D[lv] at count
     });
 }
-// keep finding shifted childrens until we enter the tower
+// keep finding shifted children for each level until we are in the tower
 function buildMerkleProof(count, W, E, idx) {
     let C = []; // children
     let CI = []; // children index
@@ -165,7 +165,7 @@ function buildMerkleProof(count, W, E, idx) {
     let [FL, LL] = getLengths(count, W);
     for (let lv = 0; true; lv++) {
         let start = idx - idx % W;
-        C.push(E[lv].slice(start, start + W)); // less than W is OK
+        C.push(E[lv].slice(start, start + W)); // less than W or more than idx are both OK for the last level
         CI.push(idx - start);
         if (start == FL[lv] - LL[lv]) break; // we are in the tower now
         idx = Math.floor(idx / W);
