@@ -1,6 +1,7 @@
 //import { strict as assert } from 'node:assert';
 import { assert } from "chai";
-import { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof } from "../src/Dev.mjs";
+import { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof, PolysumTower } from "../src/Dev.mjs";
+import { poseidon } from "circomlibjs"; // for polysum
 
 
 describe("Tower", function() {
@@ -181,5 +182,63 @@ describe("buildMerkleProof", function() {
             assert.equal(C.length, 0);
             assert.equal(CI.length, 0);
         }
+    });
+});
+
+
+function P1(v) {
+    //return (BigInt(v) + 123n) % FIELD_SIZE;
+    return poseidon([v]);
+}
+
+describe("PolysumTower", function() {
+    const FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+    const R = 2n;
+
+    // If the inputs are considered "safe":
+    //   vs[0] * R^1
+    // + vs[1] * R^2
+    // + vs[2] * R^3
+    // + vs[3] * R^4
+    function polysum(vs) {
+        return vs.reduce((acc, v, i) => acc + v * R ** BigInt(i + 1), 0n) % FIELD_SIZE;
+    }
+    // If the inputs are considered "non-safe":
+    //   P1(vs[0]) * R^1
+    // + P1(vs[1]) * R^2
+    // + P1(vs[2]) * R^3
+    // + P1(vs[3]) * R^4
+    function digestByPolysumOfHashValues(vs) {
+        return polysum(vs.map((v) => P1([v])));
+    }
+
+    describe("add", function() {
+        it("should make correct D and dd", function() {
+            const W = 4;
+            const N = 150;
+
+            // verify PolysumTower
+            let t = Tower(W, digestByPolysumOfHashValues);
+            let pt = PolysumTower(W, P1, R, FIELD_SIZE);
+            let dds = [];
+            for (let i = 0n; i < N; i++) {
+                t.add(i);
+                pt.add(i);
+                assert.deepEqual(pt.D, t.L.map(t.digest));
+                assert.equal(pt.dd, polysum(pt.D));
+                dds.push(pt.dd);
+                //if (i < 10) {
+                //    console.log("dd after add ", i, " ", pt.dd);
+                //    console.log("D: ", pt.D);
+                //}
+            }
+            assert.equal(dds[0], ((P1(0n) * R) * R) % FIELD_SIZE);
+            assert.equal(dds[1], ((P1(0n) * R + P1(1n) * R**2n) * R) % FIELD_SIZE);
+            assert.equal(dds[2], ((P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n) * R) % FIELD_SIZE);
+            assert.equal(dds[3], ((P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n + P1(3n) * R**4n) * R) % FIELD_SIZE);
+            let d03 = (P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n + P1(3n) * R**4n) % FIELD_SIZE;
+            assert.equal(dds[4], ((P1(4n) * R) * R + (P1(d03) * R) * R**2n) % FIELD_SIZE);
+            assert.equal(dds[5], ((P1(4n) * R + P1(5n) * R**2n) * R + (P1(d03) * R) * R**2n) % FIELD_SIZE);
+        });
     });
 });

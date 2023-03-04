@@ -1,5 +1,5 @@
 function Tower(W, digest) {
-    let L = []; // levels[][W]
+    let L = []; // levels[][]
     function _add(lv, v) {
         if (lv == L.length) {          // new level
             L[lv] = [v];
@@ -27,7 +27,7 @@ function digestOfRange(vs) {
 // Add shifted levels S.  Keep L the same.
 function ShiftTower(W, digest) {
     let S = []; // shifted levels (events)
-    let L = []; // levels[][W]
+    let L = []; // levels[][]
     function _add(lv, v) {
         if (lv == L.length) {          // new level
             S[lv] = [];
@@ -131,4 +131,46 @@ function verifyMerkleProof(C, CI, root, incDigest, eq) {
     return eq(C.at(-1)[CI.at(-1)], root);
 }
 
-export { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof };
+
+function PolysumTower(W, P1, R, FIELD_SIZE) {
+    let count = 0;
+    let D = []; // level digests
+    let dd = 0n; // digest of digests
+    let E = []; // events (S + L) for each level
+    function add(toAdd) {
+        let dd1 = dd;
+        for (let lv = 0, z = 0; true; lv++) {
+            // inlined length computations
+            z += W ** lv;
+            let fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
+            let ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+
+            if (ll == 0) E[lv] = [];
+            E[lv][fl] = toAdd;    // emit event
+            if (ll == 0) {        // new level
+                let d1 = (P1(toAdd) * R) % FIELD_SIZE;
+                dd1 = (dd1 + d1 * R ** BigInt(lv + 1)) % FIELD_SIZE;
+                D[lv] = d1;
+                break;
+            } else if (ll < W) {  // not full
+                let d0 = D[lv];
+                let d1 = (d0 + P1(toAdd) * R ** BigInt(ll + 1)) % FIELD_SIZE;
+                dd1 = (dd1 + (d1 + FIELD_SIZE - d0) * R ** BigInt(lv + 1)) % FIELD_SIZE;
+                D[lv] = d1;
+                break;
+            } else {              // full
+                let d0 = D[lv];
+                let d1 = (P1(toAdd) * R) % FIELD_SIZE;
+                dd1 = (dd1 + (d1 + FIELD_SIZE - d0) * R ** BigInt(lv + 1)) % FIELD_SIZE;
+                D[lv] = d1;
+                toAdd = d0;
+            }
+        }
+        dd = dd1;
+        count++;
+    }
+    return { W, D, E, add, get count() { return count }, get dd() { return dd } };
+}
+
+
+export { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof, PolysumTower };
