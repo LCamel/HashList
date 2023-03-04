@@ -155,7 +155,7 @@ describe("buildL", function() {
 
 
 describe("buildMerkleProof", function() {
-    it("should build a verifiable Merkle proof", function() {
+    it("should be able to build a verifiable Merkle proof for each added item", function() {
         let t = Tower(4, digestOfRange);
         let dt = DigestTower(4, incDigestOfRange);
         const eq = (a, b) => Array.isArray(a) ?
@@ -170,11 +170,11 @@ describe("buildMerkleProof", function() {
             // all index [0 .. i] should be provable
             for (let j = 0; j <= i; j++) {
                 // build a merkle proof
-                let [C, CI] = buildMerkleProof(count, dt.W, dt.E, j);
+                let [C, CI, rootLevel, rootIdx] = buildMerkleProof(count, dt.W, dt.E, j);
 
                 // the proof is self-consistent and match with an in-tower root
-                let root = t.L[CI.length - 1][CI.at(-1)];
-                assert.equal(verifyMerkleProof(C, CI, root, dt.incDigest, eq), true);
+                assert.equal(verifyMerkleProof(C, CI, dt.incDigest, eq), true);
+                assert.equal(eq(C.at(-1)[CI.at(-1)], t.L[rootLevel][rootIdx]), true);
             }
 
             // index i + 1 should not be provable

@@ -113,20 +113,30 @@ function buildMerkleProof(count, W, E, idx) {
     let [FL, LL] = getLengths(count, W);
     for (let lv = 0; true; lv++) {
         let start = idx - idx % W;
-        C.push(E[lv].slice(start, start + W)); // less than W or more than idx are both OK for the last level
-        CI.push(idx - start);
-        if (start == FL[lv] - LL[lv]) break; // we are in the tower now
+        if (start == FL[lv] - LL[lv]) { // we are in the tower now
+            // To make the intention more clear,
+            // here we put the root at position 0 and return a separate rootIdxInL .
+            //
+            // Another choice is putting the root at idx and return it in CI[-1] .
+            // This might be more "beautiful", since the root is on its "course".
+            // However, it is not necessary.
+            C.push(E[lv].slice(idx, idx + 1)); // fetch the single the root
+            CI.push(0);
+            return [C, CI, lv, idx - start]; // rootLevel, rootIdx
+        } else {
+            C.push(E[lv].slice(start, start + W));
+            CI.push(idx - start);
+        }
         idx = Math.floor(idx / W);
     }
-    return [C, CI];
 }
 
-function verifyMerkleProof(C, CI, root, incDigest, eq) {
+function verifyMerkleProof(C, CI, incDigest, eq) {
     //const eq = (v1, v2) => JSON.stringify(v1) == JSON.stringify(v2);
     for (let lv = 1; lv < C.length; lv++) {
         if (!eq(C[lv][CI[lv]], C[lv - 1].reduce(incDigest, undefined))) return false;
     }
-    return eq(C.at(-1)[CI.at(-1)], root);
+    return true;
 }
 
 
