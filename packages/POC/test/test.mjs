@@ -147,7 +147,7 @@ describe("buildL", function() {
             dt.add(i);
 
             let count = i + 1;
-            let L = buildL(count, dt.W, dt.E);
+            let L = buildL(count, dt.W, (lv, start, len) => dt.E[lv].slice(start, start + len));
             assert.deepEqual(L, t.L);
         }
     });
