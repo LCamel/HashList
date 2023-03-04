@@ -220,25 +220,60 @@ describe("PolysumTower", function() {
             // verify PolysumTower
             let t = Tower(W, digestByPolysumOfHashValues);
             let pt = PolysumTower(W, P1, R, FIELD_SIZE);
-            let dds = [];
-            for (let i = 0n; i < N; i++) {
+
+            t.add(0);
+            pt.add(0);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(0n) * R) * R) % FIELD_SIZE);
+            t.add(1);
+            pt.add(1);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(0n) * R + P1(1n) * R**2n) * R) % FIELD_SIZE);
+            t.add(2);
+            pt.add(2);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n) * R) % FIELD_SIZE);
+            t.add(3);
+            pt.add(3);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n + P1(3n) * R**4n) * R) % FIELD_SIZE);
+            let d03 = (P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n + P1(3n) * R**4n) % FIELD_SIZE;
+            t.add(4);
+            pt.add(4);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(4n) * R) * R
+                                 + (P1(d03) * R) * R**2n) % FIELD_SIZE);
+            t.add(5);
+            pt.add(5);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(4n) * R + P1(5n) * R**2n) * R
+                                 + (P1(d03) * R) * R**2n) % FIELD_SIZE);
+            t.add(6);
+            pt.add(6);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(4n) * R + P1(5n) * R**2n + P1(6n) * R**3n) * R
+                                 + (P1(d03) * R) * R**2n) % FIELD_SIZE);
+            t.add(7);
+            pt.add(7);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(4n) * R + P1(5n) * R**2n + P1(6n) * R**3n + P1(7n) * R**4n) * R
+                                 + (P1(d03) * R) * R**2n) % FIELD_SIZE);
+            let d47 = (P1(4n) * R + P1(5n) * R**2n + P1(6n) * R**3n + P1(7n) * R**4n) % FIELD_SIZE;
+            t.add(8);
+            pt.add(8);
+            assert.equal(pt.dd, polysum(pt.D));
+            assert.equal(pt.dd, ((P1(8n) * R) * R
+                                 + (P1(d03) * R + P1(d47) * R**2n) * R**2n) % FIELD_SIZE);
+            for (let i = 9n; i < N; i++) {
                 t.add(i);
                 pt.add(i);
                 assert.deepEqual(pt.D, t.L.map(t.digest));
                 assert.equal(pt.dd, polysum(pt.D));
-                dds.push(pt.dd);
                 //if (i < 10) {
                 //    console.log("dd after add ", i, " ", pt.dd);
                 //    console.log("D: ", pt.D);
                 //}
             }
-            assert.equal(dds[0], ((P1(0n) * R) * R) % FIELD_SIZE);
-            assert.equal(dds[1], ((P1(0n) * R + P1(1n) * R**2n) * R) % FIELD_SIZE);
-            assert.equal(dds[2], ((P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n) * R) % FIELD_SIZE);
-            assert.equal(dds[3], ((P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n + P1(3n) * R**4n) * R) % FIELD_SIZE);
-            let d03 = (P1(0n) * R + P1(1n) * R**2n + P1(2n) * R**3n + P1(3n) * R**4n) % FIELD_SIZE;
-            assert.equal(dds[4], ((P1(4n) * R) * R + (P1(d03) * R) * R**2n) % FIELD_SIZE);
-            assert.equal(dds[5], ((P1(4n) * R + P1(5n) * R**2n) * R + (P1(d03) * R) * R**2n) % FIELD_SIZE);
         });
     });
 });
