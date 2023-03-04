@@ -1,7 +1,10 @@
 {
   "devDependencies": {
+    "big-integer": "^1.6.51",
     "chai": "^4.3.7",
-    "mocha": "^10.2.0"
+    "circomlibjs": "^0.0.8",
+    "mocha": "^10.2.0",
+    "snarkjs": "^0.6.7"
   },
   "scripts": {
     "test": "mocha"
