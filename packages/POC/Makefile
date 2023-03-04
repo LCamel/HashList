@@ -1,6 +1,9 @@
 a:
 	./scripts/anvil.sh
 
+as:
+	./scripts/anvil.sh stop
+
 r:
 	./scripts/remixd.sh
 
