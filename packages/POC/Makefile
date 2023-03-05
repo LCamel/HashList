@@ -12,3 +12,6 @@ t:
 
 c:
 	./scripts/c.sh HashTowerPolysumH4W4R2
+
+d:
+	./scripts/deploy.sh
