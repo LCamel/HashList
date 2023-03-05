@@ -23,6 +23,17 @@ function digestOfRange(vs) {
     return [ arr.at(0), arr.at(-1) ];
 }
 
+function showTower() {
+    console.log("==== Tower ====");
+    let t = Tower(4, digestOfRange);
+    for (let i = 0; i < 150; i++) {
+        t.add(i);
+        console.log("====");
+        for (let lv = t.L.length - 1; lv >= 0; lv--) {
+            console.log(t.L[lv].join('\t'));
+        }
+    }
+}
 
 // Add shifted levels S.  Keep L the same.
 function ShiftTower(W, digest) {
@@ -45,6 +56,19 @@ function ShiftTower(W, digest) {
     return { W, digest, L, S, add };
 }
 
+function showShiftTower() {
+    console.log("==== ShiftTower ====");
+    const fmt = (v, l) => ("" + v).padStart(l).slice(-l);
+    const fmtl = (vs, l) => vs.map(v => fmt(v, l)).join(" ");
+    let t = ShiftTower(4, digestOfRange);
+    for (let i = 0; i < 150; i++) {
+        t.add(i);
+        console.log("\n");
+        for (var lv = t.L.length - 1; lv >= 0; lv--) {
+            console.log(fmt(fmtl(t.S[lv], 7), 70), "#", fmtl(t.L[lv], 7));
+        }
+    }
+}
 
 // Given a single number "count", can we reconstruct the "shape" of L and S ?
 function getLengths(count, W) {
@@ -184,4 +208,4 @@ function PolysumTower(W, P1, R, FIELD_SIZE) {
 }
 
 
-export { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower };
+export { Tower, showTower, digestOfRange, ShiftTower, showShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower };
