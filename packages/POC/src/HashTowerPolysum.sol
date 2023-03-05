@@ -12,9 +12,9 @@ uint8 constant H = 16;
 uint256 constant R = 2;
 
 contract HashTowerPolysum {
-    uint64 public count;
-    uint256[H] public D;
-    uint256 public dd;
+    uint64 private count;
+    uint256[H] private D;
+    uint256 private dd;
 
     event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value); // TODO: merge fields
 
@@ -66,5 +66,9 @@ contract HashTowerPolysum {
         }
         dd = dd1;
         count = c + 1;
+    }
+
+    function getCountAndDd() public view returns (uint64, uint256) {
+        return (count, dd);
     }
 }
