@@ -1,6 +1,6 @@
 //import { strict as assert } from 'node:assert';
 import { assert } from "chai";
-import { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof, PolysumTower } from "../src/Dev.mjs";
+import { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower } from "../src/Dev.mjs";
 import { poseidon } from "circomlibjs"; // for polysum
 
 
@@ -154,7 +154,7 @@ describe("buildL", function() {
 });
 
 
-describe("buildMerkleProof", function() {
+describe("buildMerkleProofAndLocateRoot", function() {
     it("should be able to build a verifiable Merkle proof for each added item", function() {
         let t = Tower(4, digestOfRange);
         let dt = DigestTower(4, incDigestOfRange);
@@ -170,17 +170,19 @@ describe("buildMerkleProof", function() {
             // all index [0 .. i] should be provable
             for (let j = 0; j <= i; j++) {
                 // build a merkle proof
-                let [C, CI, rootLevel, rootIdx] = buildMerkleProof(count, dt.W, dt.E, j);
+                let [C, CI, rootLevel, rootIdxInL] = buildMerkleProofAndLocateRoot(count, dt.W, dt.E, j);
 
                 // the proof is self-consistent and match with an in-tower root
                 assert.equal(verifyMerkleProof(C, CI, dt.incDigest, eq), true);
-                assert.equal(eq(C.at(-1)[CI.at(-1)], t.L[rootLevel][rootIdx]), true);
+                assert.equal(eq(C.at(-1)[CI.at(-1)], t.L[rootLevel][rootIdxInL]), true);
             }
 
             // index i + 1 should not be provable
-            let [C, CI] = buildMerkleProof(count, dt.W, dt.E, i + 1);
+            let [C, CI, rootLevel, rootIdxInL] = buildMerkleProofAndLocateRoot(count, dt.W, dt.E, i + 1);
             assert.equal(C.length, 0);
             assert.equal(CI.length, 0);
+            assert.equal(rootLevel, -1);
+            assert.equal(rootIdxInL, -1);
         }
     });
 });

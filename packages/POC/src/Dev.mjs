@@ -106,10 +106,11 @@ function buildL(count, W, eventFetcher) {
 }
 
 // keep finding shifted children for each level until we are in the tower
-function buildMerkleProof(count, W, E, idx) {
+function buildMerkleProofAndLocateRoot(count, W, E, idx) {
     let C = []; // children
     let CI = []; // children index
-    if (idx >= count) return [C, CI];
+    if (idx >= count) return [C, CI, -1, -1];
+
     let [FL, LL] = getLengths(count, W);
     for (let lv = 0; true; lv++) {
         let start = idx - idx % W;
@@ -122,7 +123,7 @@ function buildMerkleProof(count, W, E, idx) {
             // However, it is not necessary.
             C.push(E[lv].slice(idx, idx + 1)); // fetch the single the root
             CI.push(0);
-            return [C, CI, lv, idx - start]; // rootLevel, rootIdx
+            return [C, CI, lv, idx - start]; // rootLevel, rootIdxInL
         } else {
             C.push(E[lv].slice(start, start + W));
             CI.push(idx - start);
@@ -181,4 +182,4 @@ function PolysumTower(W, P1, R, FIELD_SIZE) {
 }
 
 
-export { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProof, verifyMerkleProof, PolysumTower };
+export { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower };
