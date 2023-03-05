@@ -141,7 +141,8 @@ function verifyMerkleProof(C, CI, incDigest, eq) {
     return true;
 }
 
-
+// use the hardcoded digestByPolysumOfHashValues function
+// this is the prototype of the contract
 function PolysumTower(W, P1, R, FIELD_SIZE) {
     let count = 0;
     let D = []; // level digests
