@@ -9,3 +9,6 @@ r:
 
 t:
 	npx mocha
+
+c:
+	./scripts/c.sh HashTowerPolysumH4W4R2
