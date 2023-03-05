@@ -106,7 +106,8 @@ function buildL(count, W, eventFetcher) {
 }
 
 // keep finding shifted children for each level until we are in the tower
-function buildMerkleProofAndLocateRoot(count, W, E, idx) {
+// eventFetcher: (lv, start, len) => [val1, val2 ...]
+function buildMerkleProofAndLocateRoot(count, W, eventFetcher, idx) {
     let C = []; // children
     let CI = []; // children index
     if (idx >= count) return [C, CI, -1, -1];
@@ -121,11 +122,11 @@ function buildMerkleProofAndLocateRoot(count, W, E, idx) {
             // Another choice is putting the root at idx and return it in CI[-1] .
             // This might be more "beautiful", since the root is on its "course".
             // However, it is not necessary.
-            C.push(E[lv].slice(idx, idx + 1)); // fetch the single the root
+            C.push(eventFetcher(lv, idx, 1)); // fetch the single the root
             CI.push(0);
             return [C, CI, lv, idx - start]; // rootLevel, rootIdxInL
         } else {
-            C.push(E[lv].slice(start, start + W));
+            C.push(eventFetcher(lv, start, W));
             CI.push(idx - start);
         }
         idx = Math.floor(idx / W);

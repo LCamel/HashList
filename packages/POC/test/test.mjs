@@ -158,6 +158,8 @@ describe("buildMerkleProofAndLocateRoot", function() {
     it("should be able to build a verifiable Merkle proof for each added item", function() {
         let t = Tower(4, digestOfRange);
         let dt = DigestTower(4, incDigestOfRange);
+
+        const eventFetcher = (lv, start, len) => dt.E[lv].slice(start, start + len);
         const eq = (a, b) => Array.isArray(a) ?
             a.length == 2 && b.length == 2 && a[0] == b[0] && a[1] == b[1] : a == b; // for range only
 
@@ -170,15 +172,15 @@ describe("buildMerkleProofAndLocateRoot", function() {
             // all index [0 .. i] should be provable
             for (let j = 0; j <= i; j++) {
                 // build a merkle proof
-                let [C, CI, rootLevel, rootIdxInL] = buildMerkleProofAndLocateRoot(count, dt.W, dt.E, j);
+                let [C, CI, rootLevel, rootIdxInL] = buildMerkleProofAndLocateRoot(count, dt.W, eventFetcher, j);
 
                 // the proof is self-consistent and match with an in-tower root
                 assert.equal(verifyMerkleProof(C, CI, dt.incDigest, eq), true);
-                assert.equal(eq(C.at(-1)[CI.at(-1)], t.L[rootLevel][rootIdxInL]), true);
+                assert.deepEqual(C.at(-1)[CI.at(-1)], t.L[rootLevel][rootIdxInL]);
             }
 
             // index i + 1 should not be provable
-            let [C, CI, rootLevel, rootIdxInL] = buildMerkleProofAndLocateRoot(count, dt.W, dt.E, i + 1);
+            let [C, CI, rootLevel, rootIdxInL] = buildMerkleProofAndLocateRoot(count, dt.W, eventFetcher, i + 1);
             assert.equal(C.length, 0);
             assert.equal(CI.length, 0);
             assert.equal(rootLevel, -1);
