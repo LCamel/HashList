@@ -30,3 +30,4 @@ echo $PID > anvil.pid
 until cast chain-id >/dev/null 2>&1 ; do sleep 1 ; done
 
 echo "anvil PID: $PID"
+echo "log file: /tmp/anvil/anvil.log"
