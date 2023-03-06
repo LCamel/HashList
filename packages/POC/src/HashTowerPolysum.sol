@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import "./HashTowerPolysumH4W4R2Verifier.sol";
+
 contract Poseidon1 {
     function poseidon(uint256[1] memory) public pure returns (uint256) {}
 }
@@ -12,6 +14,7 @@ uint8 constant H = 16;
 uint256 constant R = 2;
 
 contract HashTowerPolysum {
+    HashTowerPolysumH4W4R2Verifier private immutable verifier = new HashTowerPolysumH4W4R2Verifier();
     uint64 private count;
     uint256[H] private D;
     uint256 private dd;
@@ -70,5 +73,11 @@ contract HashTowerPolysum {
 
     function getCountAndDd() public view returns (uint64, uint256) {
         return (count, dd);
+    }
+
+    function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool) {
+        uint256[1] memory pub;
+        pub[0] = dd;
+        return verifier.verifyProof(a, b, c, pub);
     }
 }

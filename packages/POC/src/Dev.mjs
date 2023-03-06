@@ -220,4 +220,11 @@ function padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL) {
     return { dd, L, LL, rootLevel, rootIdxInL, C, CI, leaf }
 }
 
-export { Tower, showTower, digestOfRange, ShiftTower, showShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower, padInput };
+function proofBySolidityOrder(proof) {
+    const a = [ proof.pi_a[0], proof.pi_a[1] ];
+    const b = [[ proof.pi_b[0][1], proof.pi_b[0][0] ], // reversed !
+            [ proof.pi_b[1][1], proof.pi_b[1][0] ]];
+    const c = [ proof.pi_c[0], proof.pi_c[1] ];
+    return [a, b, c];
+}
+export { Tower, showTower, digestOfRange, ShiftTower, showShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower, padInput, proofBySolidityOrder };
