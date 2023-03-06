@@ -131,6 +131,15 @@ function buildL(count, W, eventFetcher) {
 
 // keep finding shifted children for each level until we are in the tower
 // eventFetcher: (lv, start, len) => [val1, val2 ...]
+//
+// returns [C, CI, rootLevel, rootIdxInL]
+//
+// To make the intention clear,
+// here we put the root at position 0 and return a separate rootIdxInL .
+//
+// Another choice is putting the root at idx and return it in CI[-1] .
+// This might be more "beautiful", since the root is on its "course".
+// However, it is not necessary.
 function buildMerkleProofAndLocateRoot(count, W, eventFetcher, idx) {
     let C = []; // children
     let CI = []; // children index
@@ -140,12 +149,6 @@ function buildMerkleProofAndLocateRoot(count, W, eventFetcher, idx) {
     for (let lv = 0; true; lv++) {
         let start = idx - idx % W;
         if (start == FL[lv] - LL[lv]) { // we are in the tower now
-            // To make the intention more clear,
-            // here we put the root at position 0 and return a separate rootIdxInL .
-            //
-            // Another choice is putting the root at idx and return it in CI[-1] .
-            // This might be more "beautiful", since the root is on its "course".
-            // However, it is not necessary.
             C.push(eventFetcher(lv, idx, 1)); // fetch the single the root
             CI.push(0);
             return [C, CI, lv, idx - start]; // rootLevel, rootIdxInL
@@ -207,5 +210,14 @@ function PolysumTower(W, P1, R, FIELD_SIZE) {
     return { W, D, E, add, get count() { return count }, get dd() { return dd } };
 }
 
+function padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL) {
+    const pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
+    const LL = pad(L.map((l) => l.length), H, 0n);
+    L = pad(L, H, []).map((l) => pad(l, W, 0n));
+    C = pad(C, H, []).map((c) => pad(c, W, 0n));
+    CI = pad(CI, H, 0n);
+    const leaf = C[0][CI[0]];
+    return { dd, L, LL, rootLevel, rootIdxInL, C, CI, leaf }
+}
 
-export { Tower, showTower, digestOfRange, ShiftTower, showShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower };
+export { Tower, showTower, digestOfRange, ShiftTower, showShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower, padInput };

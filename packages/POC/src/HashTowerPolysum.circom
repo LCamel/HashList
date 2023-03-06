@@ -237,10 +237,10 @@ template HashTowerWithDigest(H, W, R) {
     signal input L[H][W];
     signal input LL[H];
     signal input rootLevel;
-    signal input rootIdx;
+    signal input rootIdxInL;
     signal input C[H][W];
     signal input CI[H];
-    signal output out;
+    signal input leaf;
 
     component getRoot = CheckDigestAndPickOne(H, W, R);
     for (var lv = 0; lv < H; lv++) {
@@ -251,7 +251,7 @@ template HashTowerWithDigest(H, W, R) {
     }
     getRoot.dd <== dd;
     getRoot.row <== rootLevel;
-    getRoot.col <== rootIdx;
+    getRoot.col <== rootIdxInL;
 
     component checkRoot = CheckMerkleProof(H, W, R);
     for (var lv = 0; lv < H; lv++) {
@@ -264,7 +264,7 @@ template HashTowerWithDigest(H, W, R) {
 
     checkRoot.root === getRoot.out;
 
-    out <== checkRoot.leaf;
+    checkRoot.leaf === leaf;
 }
 
 //component main = HashTowerWithDigest(16, 4, 2);
