@@ -11,7 +11,7 @@ GENERATED_SOURCES_DIR=${BASE_DIR}/generated-sources
 mkdir -p ${OUT_DIR}
 mkdir -p ${GENERATED_SOURCES_DIR}
 
-PTAU_NAME=powersOfTau28_hez_final_14.ptau
+PTAU_NAME=powersOfTau28_hez_final_16.ptau
 PTAU=${OUT_DIR}/${PTAU_NAME}
 if [ ! -f "${PTAU}" ]
 then

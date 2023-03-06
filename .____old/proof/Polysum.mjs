@@ -82,6 +82,10 @@ if (IS_MAIN) {
         assert(pt.D.length == t.L.length, "bad pt.D.length");
         assertEq(pt.D, t.L.map(t.digest), "bad pt.D");
         assert(pt.dd == polysum(pt.D), "bad pt.dd");
+        if (i < 10) {
+            console.log("dd after add ", i, " ", pt.dd);
+            console.log("D: ", pt.D);
+        }
     }
 
     // generate the circuit input

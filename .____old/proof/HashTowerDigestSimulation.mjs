@@ -72,7 +72,7 @@ function getEvents(lv, start, end) {
     return events[lv].slice(start, end); // end exclusive
 }
 
-
+/*
 class Profiler {
     constructor() { this.read = this.write = this.hash = 0 }
     r() { this.read++ }
@@ -83,38 +83,57 @@ class Profiler {
 const PROF_ADD = new Profiler();
 const PROF_PROVE = new Profiler();
 var profiler;
-
+*/
 class HashTowerData { // struct HashTowerData
     constructor() {
         this.length = 0;
-        this.levels = Array.from({length: H}, () => Array(W));
+        this.digests = Array(H).fill(BigInt(0));
+        this.dod = 0n;
     }
-    getLength()         { profiler.r(); return this.length; }
-    setLength(l)        { profiler.w(); this.length = l; }
-    getLvAt(lv, idx)    { profiler.r(); return this.levels[lv][idx]; }
-    setLvAt(lv, idx, v) { profiler.w(); this.levels[lv][idx] = v; }
+    getLength()        { return this.length; }
+    setLength(l)       { this.length = l; }
+    getLvDigest(lv)    { return this.digests[lv]; }
+    setLvDigest(lv, d) { this.digests[lv] = d; }
+    getDoD()           { return this.dod; }
+    setDod(dod)        { this.dod = dod; }
 }
-
+function Poseidon1(a) { return poseidon([a]); }
+function Poseidon2(a, b) { return poseidon([a, b]); }
+const R = 2n;
+const FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 class HashTower { // library HashTower
     add(self, item) {
-        profiler = PROF_ADD;
         const len = self.getLength(); // the length before adding the item
+        var dod = self.getDoD();
+
         const lvFullLengths = getLevelFullLengths(len); // TODO: inline this function in the loop (solidity)
         var toAdd = item;
         for (let lv = 0; lv < H; lv++) {
+            emit(lv, lvFullLengths[lv], toAdd);
             const lvLen = toInTowerLength(lvFullLengths[lv]);
-            if (lvLen < W) { // not full
-                self.setLvAt(lv, lvLen, toAdd);
-                emit(lv, lvFullLengths[lv], toAdd);
+            if (lvLen == 0) {
+                // no need to load the origDigest
+                const digest = Poseidon1(toAdd);
+                self.setLvDigest(lv, digest);
+                dod = (dod + digest * R ** BigInt(lv + 1)) % FIELD_SIZE;
                 break;
-            } else { // full
-                const lvHash = HASH(Array.from({length: W}, (_, i) => self.getLvAt(lv, i))); profiler.h();
-                self.setLvAt(lv, 0, toAdd); // add it in the now-considered-being-emptied level
-                emit(lv, lvFullLengths[lv], toAdd);
-                toAdd = lvHash; // to be added in the upper level
+            } else {
+                const origDigest = self.getLvDigest(lv);
+                if (lvLen < W) {
+                    const digest = Poseidon2(origDigest, toAdd);
+                    self.setLvDigest(lv, digest);
+                    dod = (dod + (digest + (FIELD_SIZE - origDigest)) * R ** BigInt(lv + 1)) % FIELD_SIZE;
+                    break;
+                } else { // full
+                    const digest = Poseidon1(toAdd);
+                    self.setLvDigest(lv, digest);
+                    dod = (dod + (digest + (FIELD_SIZE - origDigest)) * R ** BigInt(lv + 1)) % FIELD_SIZE;
+                    toAdd = origDigest;
+                }
             }
         }
         self.setLength(len + 1);
+        self.setDod(dod);
     }
     prove(self, childrens, indexes, matchLevel) {
         profiler = PROF_PROVE;
@@ -177,10 +196,29 @@ function show(len, levels) { // direct access without triggering profiling
     console.log("level in tower lengths: " + lvLengths);
     console.log("level full lengths    : " + getLevelFullLengths(len));
 }
-
+function computeDod(digests) {
+    var s = 0n;
+    for (let i = 0n; i < H; i++) {
+        s += digests[i] * R**(i + 1n);
+    }
+    return s % FIELD_SIZE;
+}
 const htd = new HashTowerData();
 const ht = new HashTower();
 console.clear();
+console.log(htd);
+ht.add(htd, 1);
+console.log(htd);
+ht.add(htd, 2);
+console.log(htd);
+ht.add(htd, 3);
+console.log(htd);
+ht.add(htd, 4);
+console.log(htd);
+ht.add(htd, 5);
+console.log(htd);
+console.log("computeDod: ", computeDod(htd.digests));
+/*
 show(htd.length, htd.levels);
 //for (let i = 0; i < 1000000; i++) {
 for (let i = 0; i < 25; i++) {
@@ -196,6 +234,8 @@ for (let i = 0; i < 25; i++) {
         console.log("prove: ", ht.prove(htd, ...proof));
     }
 }
+*/
+/*
 
 // generate a input.json for the circom verifier
 const proof = generateMerkleProofFromEvents(10);
@@ -219,3 +259,4 @@ const inputJson = {
 BigInt.prototype.toJSON = function() { return this.toString() }
 
 console.log(JSON.stringify(inputJson));
+*/

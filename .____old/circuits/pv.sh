@@ -11,11 +11,11 @@ INPUT_FILE=${OUT_DIR}/input.json
 
 cd ${OUT_DIR}/${CIRCUIT}_js
 
-node generate_witness.js ${CIRCUIT}.wasm ${INPUT_FILE} witness.wtns
+time node generate_witness.js ${CIRCUIT}.wasm ${INPUT_FILE} witness.wtns
 
-npx snarkjs groth16 prove ${CIRCUIT}_0001.zkey witness.wtns proof.json public.json
+time npx snarkjs groth16 prove ${CIRCUIT}_0001.zkey witness.wtns proof.json public.json
 
-npx snarkjs groth16 verify verification_key.json public.json proof.json || exit 1
+time npx snarkjs groth16 verify verification_key.json public.json proof.json || exit 1
 
 
 echo "==== for remix: "
