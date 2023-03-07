@@ -55,6 +55,28 @@ function LoopTower(W, digest) {
     return { W, digest, L, add };
 }
 
+function LoopDownTower(W, digest) {
+    let L = []; // levels[][]
+    function add(toAdd) {
+        let lastFullLv = -1;
+        for (let lv = 0; ; lv++) {
+            if (lv == L.length) {
+                L[lv] = [];
+                break;
+            } else if (L[lv].length < W) {
+                break;
+            }
+            lastFullLv = lv;
+        }
+        for (let lv = lastFullLv; lv >= 0; lv--) {
+            L[lv + 1].push(digest(L[lv]));
+            L[lv] = [];
+        }
+        L[0].push(toAdd);
+    }
+    return { W, digest, L, add };
+}
+
 // Add shifted levels S.  Keep L the same.
 function ShiftTower(W, digest) {
     let S = []; // shifted levels (events)
@@ -249,4 +271,4 @@ function proofForSolidity(proof) {
     return [a, b, c];
 }
 
-export { Tower, showTower, digestOfRange, LoopTower, ShiftTower, showShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower, padInput, proofForSolidity };
+export { Tower, showTower, digestOfRange, LoopTower, LoopDownTower, ShiftTower, showShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower, padInput, proofForSolidity };
