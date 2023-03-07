@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { PolysumTower, buildL, buildMerkleProofAndLocateRoot, padInput, proofBySolidityOrder } from "../src/Dev.mjs";
+import { PolysumTower, buildL, buildMerkleProofAndLocateRoot, padInput, proofForSolidity } from "../src/Dev.mjs";
 import { poseidon } from "circomlibjs";
 import { ethers } from "ethers";
 import { groth16 } from "snarkjs";
@@ -98,7 +98,7 @@ describe("The Contract", function() {
 
 
                     console.log("calling contract.prove()...");
-                    const [a, b, c] = proofBySolidityOrder(proof);
+                    const [a, b, c] = proofForSolidity(proof);
                     const isValid = await contract.prove(a, b, c);
                     assert(isValid);
 
