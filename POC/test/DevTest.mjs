@@ -52,6 +52,25 @@ describe("Tower", function() {
             for (let i = 9; i < 150; i++) t.add(i);
             assert.deepEqual(t.L, [[148, 149], [[144,147]], [[128,143]], [[0,63], [64,127]]]);
         });
+        it("should work with Poseidon hash", function() {
+            let t = Tower(4, poseidon);
+            t.add(0n);
+            assert.deepEqual(t.L, [[0n]]);
+            t.add(1n);
+            assert.deepEqual(t.L, [[0n,1n]]);
+            t.add(2n);
+            assert.deepEqual(t.L, [[0n,1n,2n]]);
+            t.add(3n);
+            assert.deepEqual(t.L, [[0n,1n,2n,3n]]);
+            t.add(4n);
+            assert.deepEqual(t.L, [[4n], [poseidon([0n,1n,2n,3n])]]);
+            t.add(5n);
+            assert.deepEqual(t.L, [[4n,5n], [poseidon([0n,1n,2n,3n])]]);
+            for (let i = 6n; i <= 20n; i++) {
+                t.add(i);
+            }
+            assert.deepEqual(t.L, [[20n], [poseidon([16n,17n,18n,19n])], [poseidon([poseidon([0n,1n,2n,3n]), poseidon([4n,5n,6n,7n]), poseidon([8n,9n,10n,11n]), poseidon([12n,13n,14n,15n])])]]);
+        });
     });
 });
 
