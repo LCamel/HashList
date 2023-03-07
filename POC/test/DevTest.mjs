@@ -1,6 +1,6 @@
 //import { strict as assert } from 'node:assert';
 import { assert } from "chai";
-import { Tower, digestOfRange, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower } from "../src/Dev.mjs";
+import { Tower, digestOfRange, LoopTower, ShiftTower, getLengths, incDigestOfRange, DigestTower, buildL, buildMerkleProofAndLocateRoot, verifyMerkleProof, PolysumTower } from "../src/Dev.mjs";
 import { poseidon } from "circomlibjs"; // for polysum
 
 
@@ -51,6 +51,20 @@ describe("Tower", function() {
             assert.deepEqual(t.L, [[8], [[0,3], [4,7]]]);
             for (let i = 9; i < 150; i++) t.add(i);
             assert.deepEqual(t.L, [[148, 149], [[144,147]], [[128,143]], [[0,63], [64,127]]]);
+        });
+    });
+});
+
+describe("LoopTower", function() {
+    describe("add", function() {
+        it("should have the same result as Tower", function() {
+            let t = Tower(4, digestOfRange);
+            let lt = LoopTower(4, digestOfRange);
+            for (let i = 0; i < 150; i++) {
+                t.add(i);
+                lt.add(i);
+                assert.deepEqual(t.L, lt.L);
+            }
         });
     });
 });
