@@ -11,7 +11,11 @@ Poseidon1 constant P1 = Poseidon1(0x1111111122222222333333334444444400000001);
 uint256 constant FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 uint8 constant W = 4;
 uint8 constant H = 16;
+
 uint256 constant R = 2;
+uint256 constant POWR2 = 4;
+uint256 constant POWR3 = 8;
+uint256 constant POWR4 = 16;
 
 contract HashTowerPolysum {
     HashTowerPolysumH4W4R2Verifier private immutable verifier = new HashTowerPolysumH4W4R2Verifier();
@@ -49,7 +53,7 @@ contract HashTowerPolysum {
                 //let d1 = (d0 + P1(toAdd) * R ** BigInt(ll + 1)) % FIELD_SIZE;
                 //dd1 = (dd1 + (d1 + FIELD_SIZE - d0) * R ** BigInt(lv + 1)) % FIELD_SIZE;
                 uint256 d0 = D[lv];
-                uint256 powRLl = R ** (ll + 1); // TODO: overflow !!!!!!
+                uint256 powRLl = (ll == 1) ? POWR2 : ((ll == 2) ? POWR3 : POWR4); // R ** (ll + 1);
                 uint256 d1 = addmod(d0, mulmod(P1ToAdd, powRLl, FIELD_SIZE), FIELD_SIZE);
                 dd1 = addmod(dd1, mulmod(addmod(d1, FIELD_SIZE - d0, FIELD_SIZE), powRLv, FIELD_SIZE), FIELD_SIZE);
                 D[lv] = d1;
