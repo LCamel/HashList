@@ -59,14 +59,11 @@ function LoopDownTower(W, digest) {
     let L = []; // levels[][]
     function add(toAdd) {
         let lastFullLv = -1;
-        for (let lv = 0; ; lv++) {
-            if (lv == L.length) {
-                L[lv] = [];
-                break;
-            } else if (L[lv].length < W) {
-                break;
-            }
+        for (let lv = 0; lv < L.length && L[lv].length == W; lv++) {
             lastFullLv = lv;
+        }
+        if (lastFullLv == L.length - 1) { // ok for -1
+            L[L.length] = [];
         }
         for (let lv = lastFullLv; lv >= 0; lv--) {
             L[lv + 1].push(digest(L[lv]));
