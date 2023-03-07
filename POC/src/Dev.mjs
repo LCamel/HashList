@@ -220,6 +220,7 @@ function padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL) {
     return { dd, L, LL, rootLevel, rootIdxInL, C, CI, leaf }
 }
 
+// SEE: https://github.com/iden3/snarkjs/blob/a483c5d3b089659964e10531c4f2e22648cf5678/src/groth16_exportsoliditycalldata.js
 function proofForSolidity(proof) {
     const a = [ proof.pi_a[0], proof.pi_a[1] ];
     const b = [[ proof.pi_b[0][1], proof.pi_b[0][0] ], // reversed !
