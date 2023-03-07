@@ -1,0 +1,9 @@
+I would like to release the code in MIT license.
+
+However, since circomlib (circuit), circomlibjs (Posidon hash)
+and the circom generated Solidity verifier (contract)
+are marked as GPLv3, related files must also released as GPLv3.
+
+The data structure itself has no license.
+
+I release Dev.mjs (which has no dependency) in MIT license.
