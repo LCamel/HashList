@@ -58,14 +58,14 @@ function LoopTower(W, digest) {
 function LoopDownTower(W, digest) {
     let L = []; // levels[][]
     function add(toAdd) {
-        let lastFullLv = -1;
+        let highestFullLv = -1;
         for (let lv = 0; lv < L.length && L[lv].length == W; lv++) {
-            lastFullLv = lv;
+            highestFullLv = lv;
         }
-        if (lastFullLv == L.length - 1) { // ok for -1
-            L[L.length] = [];
+        if (highestFullLv + 1 == L.length) { // ok for -1
+            L[highestFullLv + 1] = [];
         }
-        for (let lv = lastFullLv; lv >= 0; lv--) {
+        for (let lv = highestFullLv; lv >= 0; lv--) {
             L[lv + 1].push(digest(L[lv]));
             L[lv] = [];
         }
@@ -249,12 +249,16 @@ function PolysumTower(W, P1, R, FIELD_SIZE) {
     return { W, D, E, add, get count() { return count }, get dd() { return dd } };
 }
 
+// nondestructive, copying methods
+const pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
+const pad0 = (arr, len) => pad(arr, len, 0n);
+const pad00 = (arr2D, h, w) => pad(arr2D, h, []).map(a => pad0(a, w));
+
 function padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL) {
-    const pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
-    const LL = pad(L.map((l) => l.length), H, 0n);
-    L = pad(L, H, []).map((l) => pad(l, W, 0n));
-    C = pad(C, H, []).map((c) => pad(c, W, 0n));
-    CI = pad(CI, H, 0n);
+    const LL = pad0(L.map((l) => l.length), H);
+    L = pad00(L, H, W);
+    C = pad00(C, H, W);
+    CI = pad0(CI, H);
     const leaf = C[0][CI[0]];
     return { dd, L, LL, rootLevel, rootIdxInL, C, CI, leaf }
 }
