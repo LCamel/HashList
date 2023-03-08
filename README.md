@@ -1,5 +1,3 @@
-A ZK-based, gas-efficient accumulator.
+A gas-efficient data structure for zero-knowledge membership proof.
 
 Visualization: https://youtu.be/7MsGTO6CuqI
-
-![HashTower](doc/HashTower-2022-02-04.png)
