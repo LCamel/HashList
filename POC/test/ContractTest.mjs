@@ -1,5 +1,6 @@
 import { assert } from "chai";
-import { PolysumTower, buildL, buildMerkleProofAndLocateRoot, padInput, proofForSolidity } from "../src/Dev.mjs";
+import { PolysumTower, proofForSolidity } from "../src/Dev.mjs";
+import { buildL, buildMerkleProofAndLocateRoot, padInput } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
 import { ethers } from "ethers";
 import { groth16 } from "snarkjs";
