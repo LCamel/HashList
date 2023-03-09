@@ -271,55 +271,60 @@ template HashTowerWithDigest(H, W, R) {
 
 
 
+
+template MustLT(NBITS) {
+    signal input in[2];
+    signal isLT <== LessThan(NBITS)(in);
+    isLT === 1;
+}
+
 // a / b = q ... r
-template Divide(B_BITS) {
+template Div(B_BITS) {
     signal input a;
     signal input b;
     signal output q;
-    signal output r;
-
+    signal r;
     q <-- a \ b;
     r <-- a % b;
     a === b * q + r;
-    component lt = LessThan(B_BITS);
-    lt.in[0] <== r;
-    lt.in[1] <== b;
-    lt.out === 1;
+    MustLT(B_BITS)([r, b]);
+}
+
+// a / b = q ... r
+template Mod(B_BITS) {
+    signal input a;
+    signal input b;
+    signal output r;
+    signal q;
+    q <-- a \ b;
+    r <-- a % b;
+    a === b * q + r;
+    MustLT(B_BITS)([r, b]);
 }
 
 template CountToLL(H, W, COUNT_BITS) {
     signal input count;
     signal output LL[H];
 
+    var CB = COUNT_BITS;
     var z = 0;
-    component lt[H];
-    component divWLv[H];
-    component modW[H];
+    signal cond[H];
+    signal tmp1[H];
+    signal tmp2[H];
+    signal tmp3[H];
     for (var lv = 0; lv < H; lv++) {
-        // LL[lv] = (count < z) ? 0 : ((count - z) / W**lv) % W + 1
         z += W ** lv;
-        // count < z ?
-        lt[lv] = LessThan(40);
-        lt[lv].in[0] <== count;
-        lt[lv].in[1] <== z;
 
-        // (count - z) / W ** lv
-        divWLv[lv] = Divide(COUNT_BITS);
-        divWLv[lv].a <== count - z;
-        divWLv[lv].b <== W ** lv;
-
-        // (....) % W
-        modW[lv] = Divide(COUNT_BITS);
-        modW[lv].a <== divWLv[lv].q;
-        modW[lv].b <== W;
-
-        LL[lv] <== (1 - lt[lv].out) * (modW[lv].r + 1);
+        // LL[lv] = (count < z) ? 0 : ((count - z) / W**lv) % W + 1
+        cond[lv] <== LessThan(CB)([count, z]);
+        tmp1[lv] <== Div(CB)(count - z, W ** lv);
+        tmp2[lv] <== Mod(CB)(tmp1[lv], W);
+        tmp3[lv] <== tmp2[lv] + 1;
+        LL[lv] <== (1 - cond[lv]) * tmp3[lv];
     }
-
 }
-
 //component main = CountToLL(20, 4, 40);
+/* INPUT_ = {
+    "count": 0
+} _*/
 
-/* INPUT = {
-    "count": 25
-} */
