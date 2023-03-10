@@ -211,7 +211,81 @@ function proofForSolidity(proof) {
     return [a, b, c];
 }
 
+
+function DigestDigestTower(W, incDigest, incDigestDigest) {
+    let count = 0;
+    let D = []; // level digests
+    let DD = []; // level digest digests
+    let E = []; // events (S + L) for each level
+    function add(toAdd) {
+        let z = 0;
+        let fl;
+        let ll;
+        let lv = 0;
+        for (; true; lv++) {
+            // inlined length computations
+            z += W ** lv;
+            fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
+            ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+            if (ll < W) break;
+        }
+
+        // First level that having space
+        let v = (lv > 0) ? D[lv - 1] : toAdd;
+        (E[lv] ??= [])[fl] = v;       // emit event
+        let prevD = (ll == 0) ? undefined : D[lv];
+        let dIdx = ll;
+        let d = incDigest(prevD, v, dIdx);
+        let prevDd = (fl == ll) ? undefined : DD[lv + 1];
+        let ddIdx = (fl == ll) ? 0 : 1; // only partial info here
+        let dd = incDigestDigest(prevDd, d, ddIdx);
+        D[lv] = d;
+        DD[lv] = dd;
+
+        z -= W ** lv;
+        lv--;
+
+        // MIDDLE
+        while (lv >= 1) {
+            fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
+            ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+
+            v = D[lv - 1];
+            E[lv][fl] = v;       // emit event
+            prevD = undefined;
+            dIdx = 0;
+            d = incDigest(prevD, v, dIdx);
+            prevDd = DD[lv + 1];
+            ddIdx = 1; // only partial info here
+            dd = incDigestDigest(prevDd, d, ddIdx);
+            D[lv] = d;
+            DD[lv] = dd;
+            z -= W ** lv;
+            lv--;
+        }
+
+        // BOTTOM
+        if (lv == 0) {
+            fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
+            ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+            v = toAdd;
+            E[lv][fl] = v;       // emit event
+            prevD = undefined;
+            dIdx = 0;
+            d = incDigest(prevD, v, dIdx);
+            prevDd = DD[lv + 1];
+            ddIdx = 1; // only partial info here
+            dd = incDigestDigest(prevDd, d, ddIdx);
+            D[lv] = d;
+            DD[lv] = dd;
+        }
+        count++;
+    }
+    return { W, incDigest, incDigestDigest,
+        get count() { return count }, D, DD, E, add };
+}
+
 export { Tower, showTower, digestOfRange,
     LoopTower, LoopDownTower, ShiftTower, showShiftTower,
     incDigestOfRange, DigestTower,
-    verifyMerkleProof, PolysumTower, proofForSolidity };
+    verifyMerkleProof, PolysumTower, proofForSolidity, DigestDigestTower };

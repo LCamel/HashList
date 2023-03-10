@@ -1,6 +1,6 @@
 //import { strict as assert } from 'node:assert';
 import { assert } from "chai";
-import { Tower, digestOfRange, LoopTower, LoopDownTower, ShiftTower, incDigestOfRange, DigestTower, verifyMerkleProof, PolysumTower } from "../src/Dev.mjs";
+import { Tower, digestOfRange, LoopTower, LoopDownTower, ShiftTower, incDigestOfRange, DigestTower, verifyMerkleProof, PolysumTower, DigestDigestTower } from "../src/Dev.mjs";
 import { getLengths, buildL, buildMerkleProofAndLocateRoot } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs"; // for polysum
 
@@ -241,6 +241,9 @@ function P1(v) {
     //return (BigInt(v) + 123n) % FIELD_SIZE;
     return poseidon([v]);
 }
+function P2(v1, v2) {
+    return poseidon([v1, v2]);
+}
 
 describe("PolysumTower", function() {
     const FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
@@ -327,4 +330,59 @@ describe("PolysumTower", function() {
             }
         });
     });
+});
+
+
+describe("DigestDigestTower", function() {
+    it("should have D and DD that match with the original version (digestOfRange)", function() {
+        let t = Tower(4, digestOfRange);
+        let incDigestDigest = (acc, v, i) => (i == 0) ? v : acc + "!" + v; // i == 0 must be identical
+        let dt = DigestDigestTower(4, incDigestOfRange, incDigestDigest);
+        for (let i = 0; i < 150; i++) {
+            t.add(i);
+            dt.add(i);
+
+            // verify D and DD
+            assert.equal(dt.D.length, t.L.length);
+            var tD = [];
+            for (let lv = 0; lv < t.L.length; lv++) {
+                var td = digestOfRange(t.L[lv]);
+                tD.push(td);
+                assert.deepEqual(dt.D[lv], td);
+            }
+            assert.deepEqual(dt.DD[0], tD.reverse().reduce(incDigestDigest));
+            //console.log("=== i: ", i);
+            //console.log("t.L: ", t.L);
+            //console.log("dt.D: ", dt.D);
+            //console.log("dt.DD: ", dt.DD);
+        }
+    });
+    it("should have D and DD that match with the original version (poseidon)", function() {
+        function digest(vs) {
+            var d = vs[0]; // i == 0 must be identical
+            for (let i = 1; i < vs.length; i++) {
+                d = P2(d, vs[i]);
+            }
+            return d;
+        }
+
+        let t = Tower(4, digest);
+        let incDigest = (acc, v, i) => (i == 0) ? v : P2(acc, v);
+        let incDigestDigest = incDigest;
+        let dt = DigestDigestTower(4, incDigest, incDigestDigest);
+        for (let i = 0; i < 150; i++) {
+            t.add(i);
+            dt.add(i);
+
+            // verify D and DD
+            var tD = t.L.map(digest);
+            assert.deepEqual(dt.D, tD);
+            assert.equal(dt.DD[0], digest(tD.reverse()));
+            //console.log("=== i: ", i);
+            //console.log("t.L: ", t.L);
+            //console.log("dt.D: ", dt.D);
+            //console.log("dt.DD: ", dt.DD);
+        }
+    });
+
 });
