@@ -230,6 +230,26 @@ function DigestDigestTower(W, incDigest, incDigestDigest) {
             if (ll < W) break;
         }
 
+        var isFirstEmpty = true;
+        while (true) {
+            let v = (lv > 0) ? D[lv - 1] : toAdd;
+            (E[lv] ??= [])[fl] = v;       // emit event
+            let prevD = (ll == 0 || ll == W) ? undefined : D[lv];
+            let dIdx = (ll == 0 || ll == W) ? 0 : ll;
+            let d = incDigest(prevD, v, dIdx);
+            let prevDd = (isFirstEmpty && fl == ll) ? undefined : DD[lv + 1];
+            let ddIdx = (isFirstEmpty && fl == ll) ? 0 : 1; // only partial info here
+            isFirstEmpty = false;
+            let dd = incDigestDigest(prevDd, d, ddIdx);
+            D[lv] = d;
+            DD[lv] = dd;
+            if (lv == 0) break;
+            z -= W ** lv;
+            lv--;
+            fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
+            ll = fl == 0 ? 0 : (fl - 1) % W + 1;
+        }
+        /*
         // First level that having space
         let v = (lv > 0) ? D[lv - 1] : toAdd;
         (E[lv] ??= [])[fl] = v;       // emit event
@@ -279,6 +299,7 @@ function DigestDigestTower(W, incDigest, incDigestDigest) {
             D[lv] = d;
             DD[lv] = dd;
         }
+        */
         count++;
     }
     return { W, incDigest, incDigestDigest,
