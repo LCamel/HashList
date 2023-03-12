@@ -21,10 +21,6 @@ template PickOne2D(M, N) {
     signal input col;
     signal output out <== PickOne(N)(Multiplexer(N, M)(in, row), col);
 }
-//component main = PickOne2D(2, 3);
-/* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 1, "col": 0 } _*/ // 9
-/* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 1, "col": 2 } _*/ // 4
-/* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 0, "col": 1 } _*/ // 2
 
 template H2() {
     signal input in[2];
@@ -49,10 +45,6 @@ template HashListH2(N) {
     }
     out <== PickOne(N + 1)(outs, len);
 }
-//component main = HashListH2(4);
-/* INPUT_ = {
-"in": [1, 2, 3, 4], "len": 4
-} _*/
 
 template MustLT(NBITS) {
     signal input a;
