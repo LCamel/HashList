@@ -12,25 +12,30 @@ import { wasm as tester } from "circom_tester";
 chai.use(chaiAsPromised);
 
 
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+async function getTestCircuit(fileHavingMain) {
+    return await tester(
+        path.join(__dirname, "circuits", fileHavingMain),
+        { reduceConstraints: false }
+    );
+}
+
 describe("PickOne", function () {
     this.timeout(200000);
 
     it("PickOne", async () => {
-        const circuit = await tester(
-            path.join(__dirname, "circuits", "PickOne.circom"),
-            { reduceConstraints: false }
-        );
+        const circuit = await getTestCircuit("PickOne.circom")
 
         var witness = await circuit.calculateWitness({
-            in: [100, 200, 300, 400], sel: 2
+            in: [100, 200, 300, 400],
+            sel: 2
         });
         await circuit.checkConstraints(witness);
         await circuit.assertOut(witness, {out: 300});
 
         await expect(circuit.calculateWitness({
-            in: [100, 200, 300, 400], sel: 4
+            in: [100, 200, 300, 400],
+            sel: 4 // out of bound
         })).to.be.rejected;
     });
 });
