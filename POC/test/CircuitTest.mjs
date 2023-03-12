@@ -179,3 +179,27 @@ describe("MustLT", function () {
         }
     });
 });
+
+
+describe("RotateLeft", function () {
+    this.timeout(200000);
+
+    it("RotateLeft", async () => {
+        const circuit = await getTestCircuit("RotateLeft.circom")
+
+        await good(circuit, { in: [100, 200, 300, 400], n: 0 }, {
+            out: [100, 200, 300, 400]
+        });
+        await good(circuit, { in: [100, 200, 300, 400], n: 1 }, {
+            out: [200, 300, 400, 100]
+        });
+        await good(circuit, { in: [100, 200, 300, 400], n: 2 }, {
+            out: [300, 400, 100, 200]
+        });
+        await good(circuit, { in: [100, 200, 300, 400], n: 3 }, {
+            out: [400, 100, 200, 300]
+        });
+
+        await bad(circuit, { in: [100, 200, 300, 400], n: 4 });  // out of bond
+    });
+});
