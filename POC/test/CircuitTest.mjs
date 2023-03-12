@@ -148,3 +148,34 @@ describe("HashListH2", function () {
         await bad(circuit, { in: [100, 200, 300, 400], len: 5 });
     });
 });
+
+
+describe("MustLT", function () {
+    this.timeout(200000);
+
+    it("MustLT", async () => {
+        const circuit = await getTestCircuit("MustLT.circom")
+
+        await good(circuit, { in: [1, 2] }, {});
+        await good(circuit, { in: [0, 7] }, {});
+
+        await bad(circuit, { in: [2, 2] });
+        await bad(circuit, { in: [0, 0] });
+
+        // it will never pass for bad out-of-bound inputs
+        await bad(circuit, { in: [8, 8] });
+        await bad(circuit, { in: [9, 7] });
+        await bad(circuit, { in: [9, 8] });
+        await bad(circuit, { in: [200, 100] });
+
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                if (i < j) {
+                    await good(circuit, { in: [i, j] }, {});
+                } else {
+                    await bad(circuit, { in: [i, j] });
+                }
+            }
+        }
+    });
+});

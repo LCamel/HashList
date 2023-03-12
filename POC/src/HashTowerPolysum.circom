@@ -54,6 +54,12 @@ template HashListH2(N) {
 "in": [1, 2, 3, 4], "len": 4
 } _*/
 
+template MustLT(NBITS) {
+    signal input in[2];
+    signal isLT <== LessThan(NBITS)(in);
+    isLT === 1;
+}
+
 
 // polysum for values of in
 //     len 0: 0
@@ -281,14 +287,6 @@ template HashTowerWithDigest(H, W, R) {
 
 //component main = HashTowerWithDigest(16, 4, 2);
 
-
-
-
-template MustLT(NBITS) {
-    signal input in[2];
-    signal isLT <== LessThan(NBITS)(in);
-    isLT === 1;
-}
 
 // a / b = q ... r
 template Div(B_BITS) {
