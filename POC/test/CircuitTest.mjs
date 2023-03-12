@@ -84,3 +84,22 @@ describe("PickOne2D", function () {
         });
     });
 });
+
+describe("H2", function () {
+    this.timeout(200000);
+
+    it("H2", async () => {
+        const circuit = await getTestCircuit("H2.circom")
+
+        await good(circuit, {
+            in: [0, 1],
+        }, {
+            out: 12583541437132735734108669866114103169564651237895298778035846191048104863326n
+        });
+        await good(circuit, {
+            in: [1, 2],
+        }, {
+            out: "7853200120776062878684798364095072458815029376092732009249414926327459813530"
+        });
+    });
+});
