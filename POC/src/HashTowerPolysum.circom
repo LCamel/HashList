@@ -26,6 +26,34 @@ template PickOne2D(M, N) {
 /* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 1, "col": 2 } _*/ // 4
 /* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 0, "col": 1 } _*/ // 2
 
+template H2() {
+    signal input in[2];
+    signal output out <== Poseidon(2)(in);
+}
+
+// len 0: 0
+// len 1           in[0]
+// len 2:       H2(in[0], in[1])
+// len 3:    H2(H2(in[0], in[1]), in[2])
+// len 4: H2(H2(H2(in[0], in[1]), in[2]), in[3])
+template HashListH2(N) {
+    signal input in[N];
+    signal input len;  // [0..N]
+    signal output out; // N + 1 outputs
+
+    signal outs[N + 1];
+    outs[0] <== 0;
+    outs[1] <== in[0];
+    for (var i = 2; i < N + 1; i++) {
+        outs[i] <== H2()([outs[i - 1], in[i - 1]]);
+    }
+    out <== PickOne(N + 1)(outs, len);
+}
+//component main = HashListH2(4);
+/* INPUT_ = {
+"in": [1, 2, 3, 4], "len": 4
+} _*/
+
 
 // polysum for values of in
 //     len 0: 0
@@ -312,30 +340,3 @@ template CountToLL(H, W, COUNT_BITS) {
     "count": 0
 } _*/
 
-template H2() {
-    signal input in[2];
-    signal output out <== Poseidon(2)(in);
-}
-
-// len 0: 0
-// len 1: in[0]
-// len 2: H2(in[0], in[1])
-// len 3: H2(H2(in[0], in[1]), in[2])
-// len 4: H2(H2(H2(in[0], in[1]), in[2]), in[3])
-template HashListH2(N) {
-    signal input in[N];
-    signal input len;  // [0..N]
-    signal output out; // N + 1 outputs
-
-    signal outs[N + 1];
-    outs[0] <== 0;
-    outs[1] <== in[0];
-    for (var i = 2; i < N + 1; i++) {
-        outs[i] <== H2()([outs[i - 1], in[i - 1]]);
-    }
-    out <== PickOne(N + 1)(outs, len);
-}
-//component main = HashListH2(4);
-/* INPUT_ = {
-"in": [1, 2, 3, 4], "len": 4
-} _*/

@@ -91,6 +91,7 @@ describe("H2", function () {
     it("H2", async () => {
         const circuit = await getTestCircuit("H2.circom")
 
+        // BigInt or string
         await good(circuit, {
             in: [0, 1],
         }, {
@@ -101,5 +102,49 @@ describe("H2", function () {
         }, {
             out: "7853200120776062878684798364095072458815029376092732009249414926327459813530"
         });
+    });
+});
+
+describe("HashListH2", function () {
+    this.timeout(200000);
+
+    it("HashListH2", async () => {
+        const circuit = await getTestCircuit("HashListH2.circom")
+
+        await good(circuit, { in: [0, 1, 2, 3], len: 0 }, {
+            out: 0
+        });
+        await good(circuit, { in: [0, 1, 2, 3], len: 1 }, {
+            out: 0
+        });
+        await good(circuit, { in: [0, 1, 2, 3], len: 2 }, {
+            out: 12583541437132735734108669866114103169564651237895298778035846191048104863326n
+        });
+        await good(circuit, { in: [0, 1, 2, 3], len: 3 }, {
+            out: 11790059851550142146278072775670916642282838830554510149311470233718605478544n
+        });
+        await good(circuit, { in: [0, 1, 2, 3], len: 4 }, {
+            out: 20127075603631019434055928315203707068407414306847615530687456290565086592967n
+        });
+
+
+        await good(circuit, { in: [100, 200, 300, 400], len: 0 }, {
+            out: 0
+        });
+        await good(circuit, { in: [100, 200, 300, 400], len: 1 }, {
+            out: 100
+        });
+        await good(circuit, { in: [100, 200, 300, 400], len: 2 }, {
+            out: 3699275827636970843851136077830925792907611923069205979397427147713774628412n
+        });
+        await good(circuit, { in: [100, 200, 300, 400], len: 3 }, {
+            out: 3925045059169335782833407477321845405342042180089864692501953598893457304808n
+        });
+        await good(circuit, { in: [100, 200, 300, 400], len: 4 }, {
+            out: 14874163058214740000325542972470514093833183500825720625361773479542469519892n
+        });
+
+
+        await bad(circuit, { in: [100, 200, 300, 400], len: 5 });
     });
 });
