@@ -39,3 +39,34 @@ describe("PickOne", function () {
         })).to.be.rejected;
     });
 });
+
+describe("PickOne2D", function () {
+    this.timeout(200000);
+
+    it("PickOne2D", async () => {
+        const circuit = await getTestCircuit("PickOne2D.circom")
+
+        const arr = [[7, 5, 8, 8, 9],
+                     [2, 5, 8, 3, 9],
+                     [8, 5, 4, 8, 6]];
+        var witness = await circuit.calculateWitness({
+            in: arr,
+            row: 2,
+            col: 4
+        });
+        await circuit.checkConstraints(witness);
+        await circuit.assertOut(witness, {out: 6});
+
+        await expect(circuit.calculateWitness({
+            in: arr,
+            row: 3, // out of bound
+            col: 2
+        })).to.be.rejected;
+
+        await expect(circuit.calculateWitness({
+            in: arr,
+            row: 0,
+            col: 5 // out of bound
+        })).to.be.rejected;
+    });
+});
