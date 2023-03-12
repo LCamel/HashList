@@ -55,8 +55,9 @@ template HashListH2(N) {
 } _*/
 
 template MustLT(NBITS) {
-    signal input in[2];
-    signal isLT <== LessThan(NBITS)(in);
+    signal input a;
+    signal input b;
+    signal isLT <== LessThan(NBITS)([a, b]);
     isLT === 1;
 }
 
@@ -311,7 +312,7 @@ template Div(B_BITS) {
     q <-- a \ b;
     r <-- a % b;
     a === b * q + r;
-    MustLT(B_BITS)([r, b]);
+    MustLT(B_BITS)(r, b);
 }
 
 // a / b = q ... r
@@ -323,7 +324,7 @@ template Mod(B_BITS) {
     q <-- a \ b;
     r <-- a % b;
     a === b * q + r;
-    MustLT(B_BITS)([r, b]);
+    MustLT(B_BITS)(r, b);
 }
 
 template CountToLL(H, W, COUNT_BITS) {

@@ -156,24 +156,24 @@ describe("MustLT", function () {
     it("MustLT", async () => {
         const circuit = await getTestCircuit("MustLT.circom")
 
-        await good(circuit, { in: [1, 2] }, {});
-        await good(circuit, { in: [0, 7] }, {});
+        await good(circuit, { a: 1, b: 2 }, {});
+        await good(circuit, { a: 0, b: 7 }, {});
 
-        await bad(circuit, { in: [2, 2] });
-        await bad(circuit, { in: [0, 0] });
+        await bad(circuit, { a: 2, b: 2 });
+        await bad(circuit, { a: 0, b: 0 });
 
         // it will never pass for bad out-of-bound inputs
-        await bad(circuit, { in: [8, 8] });
-        await bad(circuit, { in: [9, 7] });
-        await bad(circuit, { in: [9, 8] });
-        await bad(circuit, { in: [200, 100] });
+        await bad(circuit, { a: 8, b: 8 });
+        await bad(circuit, { a: 9, b: 7 });
+        await bad(circuit, { a: 9, b: 8 });
+        await bad(circuit, { a: 200, b: 100 });
 
         for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
                 if (i < j) {
-                    await good(circuit, { in: [i, j] }, {});
+                    await good(circuit, { a: i, b: j }, {});
                 } else {
-                    await bad(circuit, { in: [i, j] });
+                    await bad(circuit, { a: i, b: j });
                 }
             }
         }
