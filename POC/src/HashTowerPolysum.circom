@@ -22,17 +22,11 @@ template PickOne2D(M, N) {
     signal output out;
 
     component pickRow = Multiplexer(N, M); // M by N
-    for (var i = 0; i < M; i++) {
-        for (var j = 0; j < N; j++) {
-            pickRow.inp[i][j] <== in[i][j];
-        }
-    }
+    pickRow.inp <== in;
     pickRow.sel <== row;
 
     component pickCol = PickOne(N);
-    for (var j = 0; j < N; j++) {
-        pickCol.in[j] <== pickRow.out[j];
-    }
+    pickCol.in <== pickRow.out;
     pickCol.sel <== col;
 
     out <== pickCol.out;

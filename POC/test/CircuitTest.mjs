@@ -57,6 +57,14 @@ describe("PickOne2D", function () {
         await circuit.checkConstraints(witness);
         await circuit.assertOut(witness, {out: 6});
 
+        witness = await circuit.calculateWitness({
+            in: arr,
+            row: 1,
+            col: 0
+        });
+        await circuit.checkConstraints(witness);
+        await circuit.assertOut(witness, {out: 2});
+
         await expect(circuit.calculateWitness({
             in: arr,
             row: 3, // out of bound
