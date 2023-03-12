@@ -19,17 +19,7 @@ template PickOne2D(M, N) {
     signal input in[M][N];
     signal input row;
     signal input col;
-    signal output out;
-
-    component pickRow = Multiplexer(N, M); // M by N
-    pickRow.inp <== in;
-    pickRow.sel <== row;
-
-    component pickCol = PickOne(N);
-    pickCol.in <== pickRow.out;
-    pickCol.sel <== col;
-
-    out <== pickCol.out;
+    signal output out <== PickOne(N)(Multiplexer(N, M)(in, row), col);
 }
 //component main = PickOne2D(2, 3);
 /* INPUT_ = { "in": [[3, 2, 5], [9, 8, 4]], "row": 1, "col": 0 } _*/ // 9
