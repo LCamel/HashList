@@ -19,6 +19,14 @@ async function getTestCircuit(fileHavingMain) {
         { reduceConstraints: false }
     );
 }
+async function good(circuit, input, output) {
+    let witness = await circuit.calculateWitness(input);
+    await circuit.checkConstraints(witness);
+    await circuit.assertOut(witness, output);
+}
+async function bad(circuit, input) {
+    await expect(circuit.calculateWitness(input)).to.be.rejected;
+}
 
 describe("PickOne", function () {
     this.timeout(200000);
@@ -26,17 +34,17 @@ describe("PickOne", function () {
     it("PickOne", async () => {
         const circuit = await getTestCircuit("PickOne.circom")
 
-        var witness = await circuit.calculateWitness({
+        await good(circuit, {
             in: [100, 200, 300, 400],
             sel: 2
+        }, {
+            out: 300
         });
-        await circuit.checkConstraints(witness);
-        await circuit.assertOut(witness, {out: 300});
 
-        await expect(circuit.calculateWitness({
+        await bad(circuit, {
             in: [100, 200, 300, 400],
-            sel: 4 // out of bound
-        })).to.be.rejected;
+            sel: 4 // out of bond
+        });
     });
 });
 
@@ -49,32 +57,30 @@ describe("PickOne2D", function () {
         const arr = [[7, 5, 8, 8, 9],
                      [2, 5, 8, 3, 9],
                      [8, 5, 4, 8, 6]];
-        var witness = await circuit.calculateWitness({
+        await good(circuit, {
             in: arr,
             row: 2,
             col: 4
+        }, {
+            out: 6
         });
-        await circuit.checkConstraints(witness);
-        await circuit.assertOut(witness, {out: 6});
-
-        witness = await circuit.calculateWitness({
+        await good(circuit, {
             in: arr,
             row: 1,
             col: 0
+        }, {
+            out: 2
         });
-        await circuit.checkConstraints(witness);
-        await circuit.assertOut(witness, {out: 2});
 
-        await expect(circuit.calculateWitness({
+        await bad(circuit, {
             in: arr,
             row: 3, // out of bound
             col: 2
-        })).to.be.rejected;
-
-        await expect(circuit.calculateWitness({
+        });
+        await bad(circuit, {
             in: arr,
             row: 0,
             col: 5 // out of bound
-        })).to.be.rejected;
+        });
     });
 });
