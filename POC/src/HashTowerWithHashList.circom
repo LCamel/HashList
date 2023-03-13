@@ -106,3 +106,11 @@ template CheckDigestAndPickRoot(H, W) {
 
     root <== PickOne2D(H, W)(L, rootLevel, rootIdxInL);
 }
+
+template NotEqual() {
+    signal input a;
+    signal input b;
+    signal output out;
+    signal eq <== IsEqual()([a, b]);
+    out <== 1 - eq;
+}

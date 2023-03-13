@@ -148,7 +148,6 @@ describe("HashListH2", function () {
     });
 });
 
-
 describe("MustLT", function () {
     this.timeout(200000);
 
@@ -245,5 +244,16 @@ describe("CheckDigestAndPickRoot", function () {
             }
             //console.log(JSON.stringify(INPUT, undefined, 4));
         };
+    });
+});
+
+describe("NotEqual", function () {
+    this.timeout(200000);
+
+    it("NotEqual", async () => {
+        const circuit = await getTestCircuit("NotEqual.circom");
+
+        await good(circuit, { a: 1, b: 2 }, { out: 1 });
+        await good(circuit, { a: 2, b: 2 }, { out: 0 });
     });
 });
