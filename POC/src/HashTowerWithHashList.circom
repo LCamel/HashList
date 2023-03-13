@@ -3,6 +3,7 @@ pragma circom 2.1.0;
 include "circomlib/poseidon.circom";
 include "circomlib/multiplexer.circom";
 include "circomlib/comparators.circom";
+include "circomlib/gates.circom";
 
 template PickOne(N) {
     signal input in[N];
@@ -113,4 +114,37 @@ template NotEqual() {
     signal output out;
     signal eq <== IsEqual()([a, b]);
     out <== 1 - eq;
+}
+// for: error[TAC01]: An anonymous component cannot be used to define a dimension of an array
+template EQ() {
+    signal input a;
+    signal input b;
+    signal output out <== IsEqual()([a, b]);
+}
+// root = C[rootLevel][CI[rootLevel]]
+// leaf = C[0][CI[0]]
+// root might equal to leaf
+template CheckMerkleProof(H, W) {
+    signal input C[H][W];
+    signal input CI[H];
+    signal input rootLevel;
+    signal output root;
+    signal output leaf;
+
+    signal picked[H];
+    signal isGood[H];
+    picked[0] <== PickOne(W)(C[0], CI[0]);
+    isGood[0] <== 1;
+    var goodCount = 1;
+    for (var lv = 1; lv < H; lv++) {
+        picked[lv] <== PickOne(W)(C[lv], CI[lv]);
+        isGood[lv] <== OR()(GreaterThan(8)([lv, rootLevel]),
+                            EQ()(picked[lv], HashListH2(W)(C[lv - 1], W)));
+        goodCount += isGood[lv];
+    }
+    goodCount === H;
+
+    // now we can output the root and the leaf
+    root <== PickOne(H)(picked, rootLevel);
+    leaf <== picked[0];
 }

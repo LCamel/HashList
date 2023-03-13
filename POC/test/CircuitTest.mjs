@@ -257,3 +257,24 @@ describe("NotEqual", function () {
         await good(circuit, { a: 2, b: 2 }, { out: 0 });
     });
 });
+
+describe("CheckMerkleProof", function () {
+    this.timeout(200000);
+
+    it("CheckMerkleProof", async () => {
+        const circuit = await getTestCircuit("CheckMerkleProof.circom");
+
+        const digest = (vs) => vs.reduce((acc, v) => poseidon([acc, v]));
+        //let H = 5;
+        //let W = 4;
+        let C = [];
+        C[0] = [3, 4, 5, 6];
+        C[1] = [2, digest(C[0]), 4, 8];
+        C[2] = [5, 9, 7, digest(C[1])];
+        C[3] = [7, 6, digest(C[2]), 0];
+        C[4] = [0, 0, 0, 0];
+        let INPUT = { C, CI: [3, 1, 3, 2, 0], rootLevel: 3 };
+
+        await good(circuit, INPUT, { root: C[3][2], leaf: 6 });
+    });
+});
