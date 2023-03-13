@@ -64,4 +64,4 @@ function padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL) {
     return { dd, L, LL, rootLevel, rootIdxInL, C, CI, leaf }
 }
 
-export { getLengths, buildL, buildMerkleProofAndLocateRoot, padInput };
+export { getLengths, buildL, buildMerkleProofAndLocateRoot, pad0, pad00, padInput };

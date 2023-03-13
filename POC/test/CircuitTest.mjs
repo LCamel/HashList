@@ -4,10 +4,9 @@ import chaiAsPromised from 'chai-as-promised';
 import { fileURLToPath } from 'url';
 import * as path from "path";
 import { wasm as tester } from "circom_tester";
-//const F1Field = require("ffjavascript").F1Field;
-//const Scalar = require("ffjavascript").Scalar;
-//exports.p = Scalar.fromString("21888242871839275222246405745257275088548364400416034343698204186575808495617");
-//const Fr = new F1Field(exports.p);
+import { Tower } from "../src/Dev.mjs";
+import { pad0, pad00 } from "../src/Proof.mjs";
+import { poseidon } from "circomlibjs";
 
 chai.use(chaiAsPromised);
 
@@ -201,5 +200,41 @@ describe("RotateLeft", function () {
         });
 
         await bad(circuit, { in: [100, 200, 300, 400], n: 4 });  // out of bond
+    });
+});
+
+describe("CheckDigestAndPickRoot", function () {
+    this.timeout(200000);
+
+    it("CheckDigestAndPickRoot", async () => {
+        const circuit = await getTestCircuit("CheckDigestAndPickRoot.circom");
+
+        const digest = (vs) => vs.reduce((acc, v) => poseidon([acc, v]));
+
+        const H = 5;
+        const W = 4;
+        const t = Tower(W, digest);
+        for (let i = 0n; i < 85; i++) {
+            t.add(i);
+
+            //let rootLevel = 0;
+            //let rootIdxInL = 0;
+            let INPUT = {
+                L: pad00(t.L, H, W),
+                LL: pad0(t.L.map(l => l.length), H),
+                h: t.L.length,
+                dd: digest(t.L.map(digest).reverse()),
+                //rootLevel,
+                //rootIdxInL
+            };
+            for (let lv = 0; lv < t.L.length; lv++) {
+                for (let j = 0; j < t.L[lv].length; j++) {
+                    INPUT.rootLevel = lv;
+                    INPUT.rootIdxInL = j;
+                    await good(circuit, INPUT, { root: t.L[lv][j] });
+                }
+            }
+            //console.log(JSON.stringify(INPUT, undefined, 4));
+        };
     });
 });

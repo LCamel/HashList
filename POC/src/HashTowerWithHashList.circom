@@ -68,3 +68,41 @@ template RotateLeft(N) {
     mux.sel <== n;
     out <== mux.out;
 }
+
+template Reverse(N) {
+    signal input in[N];
+    signal output out[N];
+    for (var i = 0; i < N; i++) {
+        out[i] <== in[N - i - 1];
+    }
+}
+
+// Be specific.
+template CheckDigestAndPickRoot(H, W) {
+    signal input L[H][W];
+    signal input LL[H];
+    signal input h;
+    signal input dd;
+    signal input rootLevel;
+    signal input rootIdxInL;
+    signal output root;
+
+    MustLT(8)(h, H);
+    MustLT(8)(rootLevel, h);
+    MustLT(8)(rootIdxInL, PickOne(H)(LL, rootLevel));
+
+    // check dd
+    signal D[H];
+    for (var lv = 0; lv < H; lv++) {
+        D[lv] <== HashListH2(W)(L[lv], PickOne(H)(LL, lv));
+    }
+    //                    h=4         H=10
+    //       index: 0 1 2 3 4 5 6 7 8 9
+    //           D: d c b a 0 0 0 0 0 0
+    //     reverse: 0 0 0 0 0 0 a b c d
+    // rotate left: a b c d 0 0 0 0 0 0
+    signal dd2 <== HashListH2(H)(RotateLeft(H)(Reverse(H)(D), H - h), h);
+    dd2 === dd;
+
+    root <== PickOne2D(H, W)(L, rootLevel, rootIdxInL);
+}
