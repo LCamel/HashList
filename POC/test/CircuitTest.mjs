@@ -179,6 +179,15 @@ describe("MustLT", function () {
     });
 });
 
+describe("Reverse", function () {
+    this.timeout(200000);
+
+    it("Reverse", async () => {
+        const circuit = await getTestCircuit("Reverse.circom")
+
+        await good(circuit, { in: [6, 7, 8, 9] }, { out: [9, 8, 7, 6]});
+    });
+});
 
 describe("RotateLeft", function () {
     this.timeout(200000);
