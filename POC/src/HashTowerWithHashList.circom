@@ -22,6 +22,7 @@ template PickOne2D(M, N) {
     signal output out <== PickOne(N)(Multiplexer(N, M)(in, row), col);
 }
 
+// an interface to a hash function that can accept 2 inputs
 template H2() {
     signal input in[2];
     signal output out <== Poseidon(2)(in);
@@ -35,11 +36,11 @@ template H2() {
 template HashListH2(N) {
     signal input in[N];
     signal input len;  // [0..N]
-    signal output out; // N + 1 outputs
+    signal output out; // one of the N + 1 possibilities
 
     signal outs[N + 1];
-    outs[0] <== 0;
-    outs[1] <== in[0];
+    outs[0] <== 0;     // default 0
+    outs[1] <== in[0]; // no hash
     for (var i = 2; i < N + 1; i++) {
         outs[i] <== H2()([outs[i - 1], in[i - 1]]);
     }
@@ -57,6 +58,7 @@ template RotateLeft(N) {
     signal input in[N];
     signal input n; // 0 <= n < N
     signal output out[N];
+    // row 0: rotate 0, row 1: rotate 1, ...
     component mux = Multiplexer(N, N);
     for (var i = 0; i < N; i++) {
         for (var j = 0; j < N; j++) {
