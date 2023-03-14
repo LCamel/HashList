@@ -82,7 +82,7 @@ template Reverse(N) {
 template CheckDigestAndPickRoot(H, W) {
     signal input L[H][W];
     signal input LL[H];
-    signal input h;
+    signal input h; // height of levels that having data
     signal input dd;
     signal input rootLevel;
     signal input rootIdxInL;
@@ -108,12 +108,11 @@ template CheckDigestAndPickRoot(H, W) {
     root <== PickOne2D(H, W)(L, rootLevel, rootIdxInL);
 }
 
-template NotEqual() {
+template MustNE() {
     signal input a;
     signal input b;
-    signal output out;
     signal eq <== IsEqual()([a, b]);
-    out <== 1 - eq;
+    eq === 0;
 }
 // for: error[TAC01]: An anonymous component cannot be used to define a dimension of an array
 template EQ() {
@@ -123,7 +122,7 @@ template EQ() {
 }
 // root = C[rootLevel][CI[rootLevel]]
 // leaf = C[0][CI[0]]
-// root might equal to leaf
+// root might be equal to leaf
 template CheckMerkleProof(H, W) {
     signal input C[H][W];
     signal input CI[H];
@@ -147,4 +146,54 @@ template CheckMerkleProof(H, W) {
     // now we can output the root and the leaf
     root <== PickOne(H)(picked, rootLevel);
     leaf <== picked[0];
+}
+
+// (lv >= h && LL[lv] == 0) || (lv < h && (0 < LL[lv] && LL[lv] < W + 1))
+// count == sum of LL[lv] * W**lv
+template CheckLL(H, W) {
+    signal input LL[H];
+    signal input h;
+    signal input count;
+
+    signal isLow[H];
+    signal lvOK[H];
+    var ok = 0;
+    var sum = 0;
+    for (var lv = 0; lv < H; lv++) {
+        isLow[lv] <== LessThan(8)([lv, h]);
+        lvOK[lv] <== OR()(
+            AND()(NOT()(isLow[lv]), IsZero()(LL[lv])),
+            AND()(isLow[lv], AND()(LessThan(8)([0, LL[lv]]), LessThan(8)([LL[lv], W + 1])))
+        );
+        ok += lvOK[lv];
+        sum += LL[lv] * W**lv;
+    }
+    ok === H;
+    sum === count;
+}
+
+
+template HashTowerWithDigest(H, W) {
+    signal input count;
+    signal input dd;
+    signal input L[H][W];
+    signal input LL[H];
+    signal input h;
+    signal input rootLevel;
+    signal input rootIdxInL;
+    signal input C[H][W];
+    signal input CI[H];
+    signal input leaf;
+
+    MustNE()(count, 0);
+    CheckLL(H, W)(LL, h, count);
+
+    signal root <== CheckDigestAndPickRoot(H, W)(L, LL, h, dd, rootLevel, rootIdxInL);
+
+    signal root2;
+    signal leaf2;
+    (root2, leaf2) <== CheckMerkleProof(H, W)(C, CI, rootLevel);
+
+    root === root2;
+    leaf === leaf2;
 }

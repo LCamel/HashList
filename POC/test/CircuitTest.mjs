@@ -4,8 +4,8 @@ import chaiAsPromised from 'chai-as-promised';
 import { fileURLToPath } from 'url';
 import * as path from "path";
 import { wasm as tester } from "circom_tester";
-import { Tower } from "../src/Dev.mjs";
-import { pad0, pad00 } from "../src/Proof.mjs";
+import { Tower, DigestDigestTower } from "../src/Dev.mjs";
+import { pad0, pad00, buildL, buildMerkleProofAndLocateRoot } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
 
 chai.use(chaiAsPromised);
@@ -247,6 +247,7 @@ describe("CheckDigestAndPickRoot", function () {
     });
 });
 
+/*
 describe("NotEqual", function () {
     this.timeout(200000);
 
@@ -257,6 +258,7 @@ describe("NotEqual", function () {
         await good(circuit, { a: 2, b: 2 }, { out: 0 });
     });
 });
+*/
 
 describe("CheckMerkleProof", function () {
     this.timeout(200000);
@@ -276,5 +278,57 @@ describe("CheckMerkleProof", function () {
         let INPUT = { C, CI: [3, 1, 3, 2, 0], rootLevel: 3 };
 
         await good(circuit, INPUT, { root: C[3][2], leaf: 6 });
+    });
+});
+
+describe("CheckLL", function () {
+    this.timeout(200000);
+
+    it("CheckLL", async () => {
+        const circuit = await getTestCircuit("CheckLL.circom");
+        let INPUT = { LL: [1, 2, 1, 0, 0], h: 3, count: 1 + 2 * 4 + 1 * 16 };
+        await good(circuit, INPUT, { });
+    });
+});
+
+describe("HashTowerWithDigest", function () {
+    this.timeout(200000);
+    function padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL) {
+        const LL = pad0(L.map((l) => l.length), H);
+        L = pad00(L, H, W);
+        C = pad00(C, H, W);
+        CI = pad0(CI, H);
+        const leaf = C[0][CI[0]];
+        return { dd, L, LL, rootLevel, rootIdxInL, C, CI, leaf }
+    }
+    it("HashTowerWithDigest", async () => {
+        const circuit = await getTestCircuit("HashTowerWithDigest.circom");
+        const H = 5;
+        const W = 4;
+        let incDigest = (acc, v, i) => (i == 0) ? v : poseidon([acc, v]);
+        let t = DigestDigestTower(W, incDigest, incDigest);
+        let eventFetcher = (lv, start, len) => t.E[lv].slice(start, start + len);
+
+        for (let i = 0; i < 85; i++) {
+            console.log("==================== i: ", i);
+            t.add(i);
+            let count = i + 1;
+
+            let L = buildL(count, W, eventFetcher);
+            let LL = pad0(L.map((l) => l.length), H);
+            L = pad00(L, H, W);
+            for (let j = 0; j <= i; j++) {
+                console.log("##### j: ", j);
+                let [C, CI, rootLevel, rootIdxInL, h] =
+                    buildMerkleProofAndLocateRoot(count, W, eventFetcher, j);
+                C = pad00(C, H, W);
+                CI = pad0(CI, H);
+                let leaf = C[0][CI[0]];
+                let dd = t.DD[0];
+                let INPUT = { count, dd, L, LL, h, rootLevel, rootIdxInL, C, CI, leaf };
+                console.log(INPUT);
+                await good(circuit, INPUT, { });
+            }
+        }
     });
 });
