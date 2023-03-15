@@ -22,7 +22,7 @@ function buildL(count, W, eventFetcher) {
 // keep finding shifted children for each level until we are in the tower
 // eventFetcher: (lv, start, len) => [val1, val2 ...]
 //
-// returns [C, CI, rootLevel, rootIdxInL, h]
+// returns [C, CI, rootLevel, rootIdxInL]
 //
 // To make the intention clear,
 // here we put the root at position 0 and return a separate rootIdxInL .
@@ -41,7 +41,7 @@ function buildMerkleProofAndLocateRoot(count, W, eventFetcher, idx) {
         if (start == FL[lv] - LL[lv]) { // we are in the tower now
             C.push(eventFetcher(lv, idx, 1)); // fetch the single the root
             CI.push(0);
-            return [C, CI, lv, idx - start, FL.length]; // rootLevel, rootIdxInL
+            return [C, CI, lv, idx - start]; // rootLevel, rootIdxInL
         } else {
             C.push(eventFetcher(lv, start, W));
             CI.push(idx - start);

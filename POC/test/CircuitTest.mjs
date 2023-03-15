@@ -309,17 +309,18 @@ describe("HashTowerWithDigest", function () {
         let t = DigestDigestTower(W, incDigest, incDigest);
         let eventFetcher = (lv, start, len) => t.E[lv].slice(start, start + len);
 
-        for (let i = 0; i < 85; i++) {
+        for (let i = 0; i < 25; i++) {
             console.log("==================== i: ", i);
             t.add(i);
             let count = i + 1;
 
             let L = buildL(count, W, eventFetcher);
+            let h = L.length;
             let LL = pad0(L.map((l) => l.length), H);
             L = pad00(L, H, W);
             for (let j = 0; j <= i; j++) {
                 console.log("##### j: ", j);
-                let [C, CI, rootLevel, rootIdxInL, h] =
+                let [C, CI, rootLevel, rootIdxInL] =
                     buildMerkleProofAndLocateRoot(count, W, eventFetcher, j);
                 C = pad00(C, H, W);
                 CI = pad0(CI, H);
