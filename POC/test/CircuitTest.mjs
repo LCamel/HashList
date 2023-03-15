@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import * as path from "path";
 import { wasm as tester } from "circom_tester";
 import { Tower, DigestDigestTower } from "../src/Dev.mjs";
-import { pad0, pad00, buildL, buildMerkleProofAndLocateRoot } from "../src/Proof.mjs";
+import { pad0, pad00, padInput, buildL, buildMerkleProofAndLocateRoot } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
 
 chai.use(chaiAsPromised);
@@ -293,14 +293,6 @@ describe("CheckLL", function () {
 
 describe("HashTowerWithDigest", function () {
     this.timeout(200000);
-    function padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL) {
-        const LL = pad0(L.map((l) => l.length), H);
-        L = pad00(L, H, W);
-        C = pad00(C, H, W);
-        CI = pad0(CI, H);
-        const leaf = C[0][CI[0]];
-        return { dd, L, LL, rootLevel, rootIdxInL, C, CI, leaf }
-    }
     it("HashTowerWithDigest", async () => {
         const circuit = await getTestCircuit("HashTowerWithDigest.circom");
         const H = 5;
@@ -310,24 +302,12 @@ describe("HashTowerWithDigest", function () {
         let eventFetcher = (lv, start, len) => t.E[lv].slice(start, start + len);
 
         for (let i = 0; i < 25; i++) {
-            console.log("==================== i: ", i);
             t.add(i);
             let count = i + 1;
-
             let L = buildL(count, W, eventFetcher);
-            let h = L.length;
-            let LL = pad0(L.map((l) => l.length), H);
-            L = pad00(L, H, W);
             for (let j = 0; j <= i; j++) {
-                console.log("##### j: ", j);
-                let [C, CI, rootLevel, rootIdxInL] =
-                    buildMerkleProofAndLocateRoot(count, W, eventFetcher, j);
-                C = pad00(C, H, W);
-                CI = pad0(CI, H);
-                let leaf = C[0][CI[0]];
-                let dd = t.DD[0];
-                let INPUT = { count, dd, L, LL, h, rootLevel, rootIdxInL, C, CI, leaf };
-                console.log(INPUT);
+                let INPUT = padInput(W, H, count, t.DD[0], L,
+                    ...buildMerkleProofAndLocateRoot(count, W, eventFetcher, j));
                 await good(circuit, INPUT, { });
             }
         }
