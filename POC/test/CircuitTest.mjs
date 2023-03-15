@@ -281,11 +281,11 @@ describe("CheckMerkleProof", function () {
     });
 });
 
-describe("CheckLL", function () {
+describe("CheckLLAndh", function () {
     this.timeout(200000);
 
-    it("CheckLL", async () => {
-        const circuit = await getTestCircuit("CheckLL.circom");
+    it("CheckLLAndh", async () => {
+        const circuit = await getTestCircuit("CheckLLAndh.circom");
         let INPUT = { LL: [1, 2, 1, 0, 0], h: 3, count: 1 + 2 * 4 + 1 * 16 };
         await good(circuit, INPUT, { });
     });

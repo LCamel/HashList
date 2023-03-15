@@ -150,7 +150,7 @@ template CheckMerkleProof(H, W) {
 
 // (lv >= h && LL[lv] == 0) || (lv < h && (0 < LL[lv] && LL[lv] < W + 1))
 // count == sum of LL[lv] * W**lv
-template CheckLL(H, W) {
+template CheckLLAndh(H, W) {
     signal input LL[H];
     signal input h;
     signal input count;
@@ -172,7 +172,6 @@ template CheckLL(H, W) {
     sum === count;
 }
 
-
 template HashTowerWithDigest(H, W) {
     signal input count;
     signal input dd;
@@ -186,7 +185,7 @@ template HashTowerWithDigest(H, W) {
     signal input leaf;
 
     MustNE()(count, 0);
-    CheckLL(H, W)(LL, h, count);
+    CheckLLAndh(H, W)(LL, h, count);
 
     signal root <== CheckDigestAndPickRoot(H, W)(L, LL, h, dd, rootLevel, rootIdxInL);
 
