@@ -366,7 +366,7 @@ describe("DigestDigestTower", function() {
             return d;
         }
 
-        let t = Tower(4, digest);
+        let t = ShiftTower(4, digest);
         let incDigest = (acc, v, i) => (i == 0) ? v : P2(acc, v);
         let incDigestDigest = incDigest;
         let dt = DigestDigestTower(4, incDigest, incDigestDigest);
@@ -378,6 +378,8 @@ describe("DigestDigestTower", function() {
             var tD = t.L.map(digest);
             assert.deepEqual(dt.D, tD);
             assert.equal(dt.DD[0], digest(tD.reverse()));
+            assert.deepEqual(t.L.map((v, lv) => v.length + t.S[lv].length), dt.E.map(v => v.length));
+            assert.deepEqual(t.L.map(v => v.at(-1)), dt.E.map(v => v.at(-1)));
             //console.log("=== i: ", i);
             //console.log("t.L: ", t.L);
             //console.log("dt.D: ", dt.D);
