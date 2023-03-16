@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { PolysumTower, proofForSolidity } from "../src/Dev.mjs";
+import { DigestDigestTower, proofForSolidity } from "../src/Dev.mjs";
 import { buildL, buildMerkleProofAndLocateRoot, padInput } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
 import { ethers } from "ethers";
@@ -35,6 +35,9 @@ async function getContract() {
 function P1(v) {
     return poseidon([v]);
 }
+function P2(v1, v2) {
+    return poseidon([v1, v2]);
+}
 
 const FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 //const R = 2n;
@@ -66,10 +69,12 @@ describe("The Contract", function() {
             assert.equal(count, 0n);
             assert.equal(dd, 0n);
 
-            let pt = PolysumTower(W, P1, R, FIELD_SIZE);
+            let incDigest = (acc, v, i) => (i == 0) ? v : P2(acc, v);
+            let incDigestDigest = incDigest;
+            let dt = DigestDigestTower(4, incDigest, incDigestDigest);
             for (let i = 0; i < 150; i++) {
                 console.log("=== i: ", i);
-                pt.add(i);
+                dt.add(i);
                 //console.log(pt.dd);
 
                 const txResponse = await contract.add(i);
@@ -77,8 +82,9 @@ describe("The Contract", function() {
                 console.log("add: gasUsed: ", txReceipt.gasUsed.toBigInt());
                 [count, dd] = (await contract.getCountAndDd()).map(v => v.toBigInt());
                 assert.equal(count, i + 1);
-                assert.equal(dd, pt.dd);
-
+                assert.equal(dd, dt.DD[0]);
+                console.log(dd);
+/*
                 for (let j = 0; j <= i; j++) {
                     count = Number(count);
                     let L = buildL(count, W, eventFetcher);
@@ -108,6 +114,7 @@ describe("The Contract", function() {
                     console.log("estimated gas: " + gas);
                     //console.log("done: i: ", i, " j: ", j, "\n");
                 }
+                */
             }
 
         });

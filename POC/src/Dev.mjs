@@ -230,7 +230,7 @@ function DigestDigestTower(W, incDigest, incDigestDigest) {
             if (ll < W) break;
         }
 
-        // now we are at the first level that having space
+        // now we are at the first level that has space
         let v = (lv > 0) ? D[lv - 1] : toAdd;
         (E[lv] ??= [])[fl] = v;       // emit event
         let d = incDigest((ll == 0) ? undefined : D[lv], v, ll);
