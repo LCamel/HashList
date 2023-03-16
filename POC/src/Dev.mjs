@@ -230,76 +230,28 @@ function DigestDigestTower(W, incDigest, incDigestDigest) {
             if (ll < W) break;
         }
 
-        var isFirstEmpty = true;
+        // now we are at the first level that having space
+        let v = (lv > 0) ? D[lv - 1] : toAdd;
+        (E[lv] ??= [])[fl] = v;       // emit event
+        let d = incDigest((ll == 0) ? undefined : D[lv], v, ll);
+        let prevDd = (fl == ll) ? undefined : DD[lv + 1]; // fl == ll means there is no level above
+        let ddIdx = (fl == ll) ? 0 : 1; // only partial idx info here
+        let dd = incDigestDigest(prevDd, d, ddIdx);
+
         while (true) {
-            let v = (lv > 0) ? D[lv - 1] : toAdd;
-            (E[lv] ??= [])[fl] = v;       // emit event
-            let prevD = (ll == 0 || ll == W) ? undefined : D[lv];
-            let dIdx = (ll == 0 || ll == W) ? 0 : ll;
-            let d = incDigest(prevD, v, dIdx);
-            let prevDd = (isFirstEmpty && fl == ll) ? undefined : DD[lv + 1];
-            let ddIdx = (isFirstEmpty && fl == ll) ? 0 : 1; // only partial info here
-            isFirstEmpty = false;
-            let dd = incDigestDigest(prevDd, d, ddIdx);
             D[lv] = d;
             DD[lv] = dd;
             if (lv == 0) break;
             z -= W ** lv;
+            prevDd = dd;
             lv--;
-            fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
-            ll = fl == 0 ? 0 : (fl - 1) % W + 1;
-        }
-        /*
-        // First level that having space
-        let v = (lv > 0) ? D[lv - 1] : toAdd;
-        (E[lv] ??= [])[fl] = v;       // emit event
-        let prevD = (ll == 0) ? undefined : D[lv];
-        let dIdx = ll;
-        let d = incDigest(prevD, v, dIdx);
-        let prevDd = (fl == ll) ? undefined : DD[lv + 1];
-        let ddIdx = (fl == ll) ? 0 : 1; // only partial info here
-        let dd = incDigestDigest(prevDd, d, ddIdx);
-        D[lv] = d;
-        DD[lv] = dd;
-
-        z -= W ** lv;
-        lv--;
-
-        // MIDDLE
-        while (lv >= 1) {
-            fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
-            ll = fl == 0 ? 0 : (fl - 1) % W + 1;
-
-            v = D[lv - 1];
+            // the rest levels are all full
+            fl = Math.floor((count - z) / W ** lv) + 1; // TODO: any pattern ?
+            let v = (lv > 0) ? D[lv - 1] : toAdd;
             E[lv][fl] = v;       // emit event
-            prevD = undefined;
-            dIdx = 0;
-            d = incDigest(prevD, v, dIdx);
-            prevDd = DD[lv + 1];
-            ddIdx = 1; // only partial info here
-            dd = incDigestDigest(prevDd, d, ddIdx);
-            D[lv] = d;
-            DD[lv] = dd;
-            z -= W ** lv;
-            lv--;
+            d = incDigest(undefined, v, 0);
+            dd = incDigestDigest(prevDd, d, 42); // only partial idx info here
         }
-
-        // BOTTOM
-        if (lv == 0) {
-            fl = count < z ? 0 : Math.floor((count - z) / W ** lv) + 1;
-            ll = fl == 0 ? 0 : (fl - 1) % W + 1;
-            v = toAdd;
-            E[lv][fl] = v;       // emit event
-            prevD = undefined;
-            dIdx = 0;
-            d = incDigest(prevD, v, dIdx);
-            prevDd = DD[lv + 1];
-            ddIdx = 1; // only partial info here
-            dd = incDigestDigest(prevDd, d, ddIdx);
-            D[lv] = d;
-            DD[lv] = dd;
-        }
-        */
         count++;
     }
     return { W, incDigest, incDigestDigest,
