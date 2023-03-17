@@ -7,14 +7,25 @@ import { wasm as tester } from "circom_tester";
 import { Tower, DigestDigestTower } from "../src/Dev.mjs";
 import { pad0, pad00, padInput, buildL, buildMerkleProofAndLocateRoot } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
+import * as tmpfile from "tmp";
+import * as fs from "fs";
 
 chai.use(chaiAsPromised);
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-async function getTestCircuit(fileHavingMain) {
+async function getTestCircuit(circuitName, args) {
+    let src = path.join(__dirname, "..", "src", "HashTowerWithHashList.circom");
+    let content = `
+pragma circom 2.1.4;
+include "${src}";
+component main = ${circuitName}(${args});
+    `;
+    let fileHavingMain = tmpfile.fileSync().name;
+    fs.writeFileSync(fileHavingMain, content);
+    //console.log("fileHavingMain: ", fileHavingMain);
     return await tester(
-        path.join(__dirname, "circuits", fileHavingMain),
+        fileHavingMain,
         { reduceConstraints: false }
     );
 }
@@ -31,7 +42,7 @@ describe("PickOne", function () {
     this.timeout(200000);
 
     it("PickOne", async () => {
-        const circuit = await getTestCircuit("PickOne.circom")
+        const circuit = await getTestCircuit("PickOne", [4]);
 
         await good(circuit, {
             in: [100, 200, 300, 400],
@@ -51,7 +62,7 @@ describe("PickOne2D", function () {
     this.timeout(200000);
 
     it("PickOne2D", async () => {
-        const circuit = await getTestCircuit("PickOne2D.circom")
+        const circuit = await getTestCircuit("PickOne2D", [3, 5]);
 
         const arr = [[7, 5, 8, 8, 9],
                      [2, 5, 8, 3, 9],
@@ -88,7 +99,7 @@ describe("H2", function () {
     this.timeout(200000);
 
     it("H2", async () => {
-        const circuit = await getTestCircuit("H2.circom")
+        const circuit = await getTestCircuit("H2", []);
 
         // BigInt or string
         await good(circuit, {
@@ -108,7 +119,7 @@ describe("HashListH2", function () {
     this.timeout(200000);
 
     it("HashListH2", async () => {
-        const circuit = await getTestCircuit("HashListH2.circom")
+        const circuit = await getTestCircuit("HashListH2", [4]);
 
         await good(circuit, { in: [0, 1, 2, 3], len: 0 }, {
             out: 0
@@ -152,7 +163,7 @@ describe("MustLT", function () {
     this.timeout(200000);
 
     it("MustLT", async () => {
-        const circuit = await getTestCircuit("MustLT.circom")
+        const circuit = await getTestCircuit("MustLT", [3]);
 
         await good(circuit, { a: 1, b: 2 }, {});
         await good(circuit, { a: 0, b: 7 }, {});
@@ -182,7 +193,7 @@ describe("Reverse", function () {
     this.timeout(200000);
 
     it("Reverse", async () => {
-        const circuit = await getTestCircuit("Reverse.circom")
+        const circuit = await getTestCircuit("Reverse", [4]);
 
         await good(circuit, { in: [6, 7, 8, 9] }, { out: [9, 8, 7, 6]});
     });
@@ -192,7 +203,7 @@ describe("RotateLeft", function () {
     this.timeout(200000);
 
     it("RotateLeft", async () => {
-        const circuit = await getTestCircuit("RotateLeft.circom")
+        const circuit = await getTestCircuit("RotateLeft", [4]);
 
         await good(circuit, { in: [100, 200, 300, 400], n: 0 }, {
             out: [100, 200, 300, 400]
@@ -215,7 +226,7 @@ describe("CheckDigestAndPickRoot", function () {
     this.timeout(200000);
 
     it("CheckDigestAndPickRoot", async () => {
-        const circuit = await getTestCircuit("CheckDigestAndPickRoot.circom");
+        const circuit = await getTestCircuit("CheckDigestAndPickRoot", [5, 4]);
 
         const digest = (vs) => vs.reduce((acc, v) => poseidon([acc, v]));
 
@@ -264,7 +275,7 @@ describe("CheckMerkleProof", function () {
     this.timeout(200000);
 
     it("CheckMerkleProof", async () => {
-        const circuit = await getTestCircuit("CheckMerkleProof.circom");
+        const circuit = await getTestCircuit("CheckMerkleProof", [5, 4]);
 
         const digest = (vs) => vs.reduce((acc, v) => poseidon([acc, v]));
         //let H = 5;
@@ -285,7 +296,7 @@ describe("CheckLLAndh", function () {
     this.timeout(200000);
 
     it("CheckLLAndh", async () => {
-        const circuit = await getTestCircuit("CheckLLAndh.circom");
+        const circuit = await getTestCircuit("CheckLLAndh", [5, 4]);
         let INPUT = { LL: [1, 2, 1, 0, 0], h: 3, count: 1 + 2 * 4 + 1 * 16 };
         await good(circuit, INPUT, { });
     });
@@ -294,7 +305,7 @@ describe("CheckLLAndh", function () {
 describe("HashTowerWithDigest", function () {
     this.timeout(200000);
     it("HashTowerWithDigest", async () => {
-        const circuit = await getTestCircuit("HashTowerWithDigest.circom");
+        const circuit = await getTestCircuit("HashTowerWithDigest", [5, 4]);
         const H = 5;
         const W = 4;
         let incDigest = (acc, v, i) => (i == 0) ? v : poseidon([acc, v]);
