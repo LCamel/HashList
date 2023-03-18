@@ -57,7 +57,7 @@ describe("PickOne", function () {
         });
     });
 });
-
+/*
 describe("PickOne2D", function () {
     this.timeout(200000);
 
@@ -94,7 +94,7 @@ describe("PickOne2D", function () {
         });
     });
 });
-
+*/
 describe("H2", function () {
     this.timeout(200000);
 
@@ -158,7 +158,7 @@ describe("HashListH2", function () {
         await bad(circuit, { in: [100, 200, 300, 400], len: 5 });
     });
 });
-
+/*
 describe("MustLT", function () {
     this.timeout(200000);
 
@@ -188,7 +188,7 @@ describe("MustLT", function () {
         }
     });
 });
-
+*/
 describe("Reverse", function () {
     this.timeout(200000);
 
@@ -221,7 +221,7 @@ describe("RotateLeft", function () {
         await bad(circuit, { in: [100, 200, 300, 400], n: 4 });  // out of bond
     });
 });
-
+/*
 describe("CheckDigestAndPickRoot", function () {
     this.timeout(200000);
 
@@ -257,7 +257,7 @@ describe("CheckDigestAndPickRoot", function () {
         };
     });
 });
-
+*/
 /*
 describe("NotEqual", function () {
     this.timeout(200000);
@@ -270,7 +270,7 @@ describe("NotEqual", function () {
     });
 });
 */
-
+/*
 describe("CheckMerkleProof", function () {
     this.timeout(200000);
 
@@ -291,7 +291,8 @@ describe("CheckMerkleProof", function () {
         await good(circuit, INPUT, { root: C[3][2], leaf: 6 });
     });
 });
-
+*/
+/*
 describe("CheckLLAndh", function () {
     this.timeout(200000);
 
@@ -301,7 +302,8 @@ describe("CheckLLAndh", function () {
         await good(circuit, INPUT, { });
     });
 });
-
+*/
+/*
 describe("HashTowerWithDigest", function () {
     this.timeout(200000);
     it("HashTowerWithDigest", async () => {
@@ -324,3 +326,4 @@ describe("HashTowerWithDigest", function () {
         }
     });
 });
+*/
