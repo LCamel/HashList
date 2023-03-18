@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import * as path from "path";
 import { wasm as tester } from "circom_tester";
 import { Tower, DigestDigestTower } from "../src/Dev.mjs";
-import { pad0, pad00, padInput, buildL, buildMerkleProofAndLocateRoot } from "../src/Proof.mjs";
+import { pad0, pad00, padInput, buildL, buildMerkleProofAndLocateRoot, getLengths } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
 import * as tmpfile from "tmp";
 import * as fs from "fs";
@@ -327,3 +327,22 @@ describe("HashTowerWithDigest", function () {
     });
 });
 */
+
+// this test does NOT proof that the circuit has enough constraints
+describe("Compute_LL_h", function () {
+    this.timeout(200000);
+    it("Compute_LL_h", async () => {
+        const H = 3;
+        const W = 4;
+        const H_BITS = 3;
+        const W_BITS = 3;
+
+        const circuit = await getTestCircuit("Compute_LL_h", [H, W, H_BITS, W_BITS]);
+        for (let count = 0; count <= 84; count++) {
+            let [_, LL] = getLengths(count, W);
+            let h = LL.length;
+            LL = pad0(LL, H);
+            await good(circuit, { count }, { LL, h });
+        }
+    });
+});
