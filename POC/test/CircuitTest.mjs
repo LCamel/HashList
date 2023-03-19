@@ -346,3 +346,22 @@ describe("Compute_LL_h", function () {
         }
     });
 });
+
+describe("Include", function () {
+    this.timeout(200000);
+    it("Include", async () => {
+        const N = 4;
+
+        const circuit = await getTestCircuit("Include", [N]);
+        await good(circuit, { "in": [ 7, 2, 3, 6 ], "v": 7 }, { "out": 1 });
+        await good(circuit, { "in": [ 7, 2, 3, 6 ], "v": 2 }, { "out": 1 });
+        await good(circuit, { "in": [ 7, 2, 3, 6 ], "v": 3 }, { "out": 1 });
+        await good(circuit, { "in": [ 7, 2, 3, 6 ], "v": 6 }, { "out": 1 });
+
+        await good(circuit, { "in": [ 7, 2, 3, 6 ], "v": 8 }, { "out": 0 });
+        await good(circuit, { "in": [ 7, 2, 3, 6 ], "v": 0 }, { "out": 0 });
+
+        await good(circuit, { "in": [ 0, 2, 3, 6 ], "v": 0 }, { "out": 1 });
+        await good(circuit, { "in": [ 7, 2, 3, 0 ], "v": 0 }, { "out": 1 });
+    });
+});
