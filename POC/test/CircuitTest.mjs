@@ -439,6 +439,7 @@ describe("MerkleRoot", function () {
         await good(circuit, { C, rootLv: 4, leaf: 5 }, { root: digest(C[3]) });
         await good(circuit, { C, rootLv: 4, leaf: 6 }, { root: digest(C[3]) });
         await bad(circuit, { C, rootLv: 4, leaf: 2 }); // non exist leaf
+        await bad(circuit, { C, rootLv: 5, leaf: 3 }); // level should <= 5 - 1
         C[2][1] = 42; // break the proof
         await bad(circuit, { C, rootLv: 4, leaf: 6 });
 
