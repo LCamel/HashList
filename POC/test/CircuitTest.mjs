@@ -365,3 +365,37 @@ describe("Include", function () {
         await good(circuit, { "in": [ 7, 2, 3, 0 ], "v": 0 }, { "out": 1 });
     });
 });
+
+describe("LessThanArray", function () {
+    this.timeout(200000);
+    it("LessThanArray N = 4", async () => {
+        const N = 4;
+        const circuit = await getTestCircuit("LessThanArray", [N]);
+        await good(circuit, { "v": 0 }, { "out": [0, 0, 0, 0] });
+        await good(circuit, { "v": 1 }, { "out": [1, 0, 0, 0] });
+        await good(circuit, { "v": 2 }, { "out": [1, 1, 0, 0] });
+        await good(circuit, { "v": 3 }, { "out": [1, 1, 1, 0] });
+        await good(circuit, { "v": 4 }, { "out": [1, 1, 1, 1] });
+        await bad(circuit, { "v": 5 });
+    });
+    it("LessThanArray N = 2", async () => {
+        const N = 2;
+        const circuit = await getTestCircuit("LessThanArray", [N]);
+        await good(circuit, { "v": 0 }, { "out": [0, 0] });
+        await good(circuit, { "v": 1 }, { "out": [1, 0] });
+        await good(circuit, { "v": 2 }, { "out": [1, 1] });
+        await bad(circuit, { "v": 3 });
+    });
+    it("LessThanArray N = 1", async () => {
+        const N = 1;
+        const circuit = await getTestCircuit("LessThanArray", [N]);
+        await good(circuit, { "v": 0 }, { "out": [0] });
+        await good(circuit, { "v": 1 }, { "out": [1] });
+        await bad(circuit, { "v": 2 });
+    });
+    it("LessThanArray N = 0 should fail", async () => {
+        const N = 0;
+        await expect(getTestCircuit("LessThanArray", [N])).to.be.rejected;
+    });
+
+});

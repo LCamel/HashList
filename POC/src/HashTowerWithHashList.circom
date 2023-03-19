@@ -121,12 +121,34 @@ template Include(N) {
     }
     out <== IsZero()(prod[N - 1]);
 }
+
+template LessThanArray(N) { // N >= 1
+    signal input v; // v <= N   a larger v will automatically fail
+    signal output out[N]; // out[i] = i < v ? 1 : 0;
+
+    var oneCount = 0;
+    for (var i = 0; i < N; i++) {
+        out[i] <-- i < v ? 1 : 0;
+        (out[i] - 0) * (out[i] - 1) === 0; // out[i] must be 0 or 1
+        oneCount += out[i];
+    }
+    oneCount === v; // it can hold only when v <= N
+
+    signal isUp[N - 1]; // isUp[i] = (out[i] == 0) && (out[i + 1] == 1)
+    var upCount = 0;
+    for (var i = 0; i < N - 1; i++) {
+        isUp[i] <== (1 - out[i]) * out[i + 1];
+        upCount += isUp[i];
+    }
+    upCount === 0;
+}
+
 template IncludeInPrefix(N) {
     signal input in[N];
     signal input prefixLen;
     signal input v;
     signal output out;
-    signal prod[N];
+
     signal isGood[N];
     var goodCount = 0;
     for (var i = 0; i < N; i++) {
