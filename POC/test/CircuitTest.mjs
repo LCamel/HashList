@@ -397,5 +397,25 @@ describe("LessThanArray", function () {
         const N = 0;
         await expect(getTestCircuit("LessThanArray", [N])).to.be.rejected;
     });
+});
 
+describe("IncludeInPrefix", function () {
+    this.timeout(200000);
+    it("IncludeInPrefix N = 4", async () => {
+        const N = 4;
+        const circuit = await getTestCircuit("IncludeInPrefix", [N]);
+        const _in = [8, 6, 10, 9];
+        await good(circuit, { in: _in, prefixLen: 2, v: 6 }, { out: 1 });
+        await good(circuit, { in: _in, prefixLen: 2, v: 9 }, { out: 0 });
+        await good(circuit, { in: _in, prefixLen: 0, v: 8 }, { out: 0 });
+        await good(circuit, { in: _in, prefixLen: 1, v: 8 }, { out: 1 });
+        await good(circuit, { in: _in, prefixLen: 4, v: 42 }, { out: 0 });
+
+        for (let prefixLen = 0; prefixLen <= N; prefixLen++) {
+            for (let v of _in.concat(42, 77)) {
+                let out = _in.slice(0, prefixLen).includes(v) ? 1 : 0;
+                await good(circuit, { "in": _in, prefixLen, v }, { out });
+            }
+        }
+    });
 });

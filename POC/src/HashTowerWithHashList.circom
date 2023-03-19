@@ -122,7 +122,7 @@ template Include(N) {
     out <== IsZero()(prod[N - 1]);
 }
 
-template LessThanArray(N) { // N >= 1
+template LessThanArray(N) { // N >= 1   complexity: 2N
     signal input v; // v <= N   a larger v will automatically fail
     signal output out[N]; // out[i] = i < v ? 1 : 0;
 
@@ -140,19 +140,20 @@ template LessThanArray(N) { // N >= 1
         isUp[i] <== (1 - out[i]) * out[i + 1];
         upCount += isUp[i];
     }
-    upCount === 0;
+    upCount === 0; // no 0 to 1  =>  all 1 must be at the left most side
 }
 
-template IncludeInPrefix(N) {
+template IncludeInPrefix(N) { // complexity 5N
     signal input in[N];
-    signal input prefixLen;
+    signal input prefixLen; // 0 <= prefixLen <= N
     signal input v;
-    signal output out;
+    signal output out; // 1 iff v is in  in[0 .. prefixLen - 1]
 
+    signal ltPrefix[N] <== LessThanArray(N)(prefixLen);
     signal isGood[N];
     var goodCount = 0;
     for (var i = 0; i < N; i++) {
-        isGood[i] <== AND()(IsEqual()([in[i], v]), LessThan(6)([i, prefixLen]));
+        isGood[i] <== AND()(IsEqual()([in[i], v]), ltPrefix[i]);
         goodCount += isGood[i];
     }
     out <== IsNonZero()(goodCount);
