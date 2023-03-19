@@ -161,14 +161,16 @@ template IncludeInPrefix(N) { // complexity 5N
 
 template MerkleRoot(H, W) {
     signal input C[H - 1][W];
-    signal input rootLv;
+    signal input rootLv; // 0 <= rootLv <= H - 1
     signal input leaf;
-    signal output root;
+    signal output root; // made from C[0 .. rootLv - 1][]   root = leaf if rootLv == 0
 
-    signal TBI[H];
+    signal TBI[H]; // to be included
     TBI[0] <== leaf;
+    signal ltRootLv[H - 1] <== LessThanArray(H - 1)(rootLv); // this circuit also checks rootLv <= H - 1
     for (var lv = 0; lv < H - 1; lv++) {
-        Must()(OR() ( NOT()( LessThan(8)([lv, rootLv]) )  , Include(W)( C[lv], TBI[lv] ) ) );
+        // C[lv] includes TBI[lv]   or   lv >= rootLv
+        Must()(OR() ( Include(W)( C[lv], TBI[lv] ) , NOT()( ltRootLv[lv] ) ) );
         TBI[lv + 1] <== HashListH2(W)(C[lv], W);
     }
     root <== PickOne(H)(TBI, rootLv);

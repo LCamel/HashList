@@ -419,3 +419,58 @@ describe("IncludeInPrefix", function () {
         }
     });
 });
+
+describe("MerkleRoot", function () {
+    this.timeout(200000);
+
+    it("MerkleRoot", async () => {
+        const circuit = await getTestCircuit("MerkleRoot", [5, 4]);
+
+        const digest = (vs) => vs.reduce((acc, v) => poseidon([acc, v]));
+        //let H = 5;
+        //let W = 4;
+        let C = [];
+        C[0] = [3, 4, 5, 6];
+        C[1] = [2, digest(C[0]), 4, 8];
+        C[2] = [5, 9, 7, digest(C[1])];
+        C[3] = [7, 6, digest(C[2]), 0];
+        await good(circuit, { C, rootLv: 4, leaf: 3 }, { root: digest(C[3]) });
+        await good(circuit, { C, rootLv: 4, leaf: 4 }, { root: digest(C[3]) });
+        await good(circuit, { C, rootLv: 4, leaf: 5 }, { root: digest(C[3]) });
+        await good(circuit, { C, rootLv: 4, leaf: 6 }, { root: digest(C[3]) });
+        await bad(circuit, { C, rootLv: 4, leaf: 2 }); // non exist leaf
+        C[2][1] = 42; // break the proof
+        await bad(circuit, { C, rootLv: 4, leaf: 6 });
+
+        C = [];
+        C[0] = [3, 4, 5, 6];
+        C[1] = [2, digest(C[0]), 4, 8];
+        C[2] = [5, 9, 7, digest(C[1])];
+        C[3] = [0, 0, 0, 0];
+        await good(circuit, { C, rootLv: 3, leaf: 3 }, { root: digest(C[2]) });
+        await good(circuit, { C, rootLv: 3, leaf: 4 }, { root: digest(C[2]) });
+        await good(circuit, { C, rootLv: 3, leaf: 5 }, { root: digest(C[2]) });
+        await good(circuit, { C, rootLv: 3, leaf: 6 }, { root: digest(C[2]) });
+        C[3] = [8, 9, 10, 11]; // don't care
+        await good(circuit, { C, rootLv: 3, leaf: 3 }, { root: digest(C[2]) });
+
+        C = [];
+        C[0] = [3, 4, 5, 6];
+        C[1] = [0, 0, 0, 0];
+        C[2] = [0, 0, 0, 0];
+        C[3] = [0, 0, 0, 0];
+        await good(circuit, { C, rootLv: 1, leaf: 3 }, { root: digest(C[0]) });
+        await good(circuit, { C, rootLv: 1, leaf: 4 }, { root: digest(C[0]) });
+        await good(circuit, { C, rootLv: 1, leaf: 5 }, { root: digest(C[0]) });
+        await good(circuit, { C, rootLv: 1, leaf: 6 }, { root: digest(C[0]) });
+        C[1] = [8, 9, 10, 11]; // don't care
+        await good(circuit, { C, rootLv: 1, leaf: 3 }, { root: digest(C[0]) });
+
+        C = [];
+        C[0] = [3, 4, 5, 6]; // don't care
+        C[1] = [0, 1, 2, 0];
+        C[2] = [0, 3, 4, 0];
+        C[3] = [0, 0, 0, 0];
+        await good(circuit, { C, rootLv: 0, leaf: 42 }, { root: 42 });
+    });
+});
