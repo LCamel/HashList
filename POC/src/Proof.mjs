@@ -14,6 +14,7 @@ function getLengths(count, W) {
 }
 
 // eventFetcher: (lv, start, len) => [val1, val2 ...]
+// only for debugging
 function buildL(count, W, eventFetcher) {
     let [FL, LL] = getLengths(count, W);
     return FL.map((fl, lv) => eventFetcher(lv, fl - LL[lv], LL[lv]));
@@ -21,30 +22,19 @@ function buildL(count, W, eventFetcher) {
 
 // keep finding shifted children for each level until we are in the tower
 // eventFetcher: (lv, start, len) => [val1, val2 ...]
-//
-// returns [C, CI, rootLevel, rootIdxInL]
-//
-// To make the intention clear,
-// here we put the root at position 0 and return a separate rootIdxInL .
-//
-// Another choice is putting the root at idx and return it in CI[-1] .
-// This might be more "beautiful", since the root is on its "course".
-// However, it is not necessary.
-function buildMerkleProofAndLocateRoot(count, W, eventFetcher, idx) {
-    let C = []; // children
-    let CI = []; // children index
-    if (idx >= count) return [C, CI, -1, -1];
-
+// idx: the full index of level 0
+// returns [C, RL, rootLv]
+function buildMerkleProofAndRootLevel(count, W, eventFetcher, idx) {
+    if (idx >= count) return [[], [], -1, -1];
     let [FL, LL] = getLengths(count, W);
+    let C = []; // children
     for (let lv = 0; true; lv++) {
         let start = idx - idx % W;
         if (start == FL[lv] - LL[lv]) { // we are in the tower now
-            C.push(eventFetcher(lv, idx, 1)); // fetch the single the root
-            CI.push(0);
-            return [C, CI, lv, idx - start]; // rootLevel, rootIdxInL
+            let RL = eventFetcher(lv, start, LL[lv]);
+            return [C, RL, lv];
         } else {
             C.push(eventFetcher(lv, start, W));
-            CI.push(idx - start);
         }
         idx = Math.floor(idx / W);
     }
@@ -65,4 +55,4 @@ function padInput(W, H, count, dd, L, C, CI, rootLevel, rootIdxInL) {
     return { count, dd, L, LL, h, rootLevel, rootIdxInL, C, CI, leaf };
 }
 
-export { getLengths, buildL, buildMerkleProofAndLocateRoot, pad0, pad00, padInput };
+export { getLengths, buildL, buildMerkleProofAndRootLevel, pad0, pad00, padInput };

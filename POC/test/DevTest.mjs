@@ -1,7 +1,7 @@
 //import { strict as assert } from 'node:assert';
 import { assert } from "chai";
 import { Tower, digestOfRange, LoopTower, LoopDownTower, ShiftTower, incDigestOfRange, DigestTower, verifyMerkleProof, PolysumTower, DigestDigestTower } from "../src/Dev.mjs";
-import { getLengths, buildL, buildMerkleProofAndLocateRoot } from "../src/Proof.mjs";
+import { getLengths, buildL, buildMerkleProofAndRootLevel } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs"; // for polysum
 
 
@@ -200,7 +200,7 @@ describe("buildL", function() {
     });
 });
 
-
+/*
 describe("buildMerkleProofAndLocateRoot", function() {
     it("should be able to build a verifiable Merkle proof for each added item", function() {
         let t = Tower(4, digestOfRange);
@@ -235,7 +235,7 @@ describe("buildMerkleProofAndLocateRoot", function() {
         }
     });
 });
-
+*/
 
 function P1(v) {
     //return (BigInt(v) + 123n) % FIELD_SIZE;

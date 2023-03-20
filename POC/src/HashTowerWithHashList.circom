@@ -102,7 +102,7 @@ template Compute_LL_h(H, W, W_BITS) { // Compute_LL_h(20, 4, 3) : 139 constraint
     var s = 0;
     for (var lv = 0; lv < H; lv++) {
         LL[lv] <-- compute_ll(W, count, lv);
-        Must()( LessEqThan(W_BITS)( [ LL[lv], W ]));  // LL[lv] <= W
+        Must()( LessEqThan(W_BITS)( [ LL[lv], W ])); // LL[lv] <= W
         MustEQ()( IsNonZero()( LL[lv] ), lt_h[lv] ); // LL[lv] != 0 iff lv < h
         s += LL[lv] * W**lv;
     }
@@ -163,7 +163,7 @@ template MerkleRoot(H, W) {
     signal input C[H - 1][W];
     signal input rootLv; // 0 <= rootLv <= H - 1
     signal input leaf;
-    signal output root; // made from C[0 .. rootLv - 1][]   rootLv == H-1 => root == leaf
+    signal output root; // made from C[0 .. rootLv - 1][]   root = leaf if rootLv == 0
 
     signal TBI[H]; // to be included
     TBI[0] <== leaf;
@@ -189,14 +189,14 @@ template HashTowerWithDigest(H, W, H_BITS, W_BITS) {
     signal LL[H];
     signal h;
     (LL, h) <== Compute_LL_h(H, W, W_BITS)(count);
-    Must()(LessEqThan(H_BITS)([rootLv, h]));
-    signal rootll <== PickOne(H)(LL, rootLv); // root level length  rootll = LL[rootLv]
+    Must()(LessThan(H_BITS)([rootLv, h]));    // rootLv < h
+    signal rootLl <== PickOne(H)(LL, rootLv); // rootLl = LL[rootLv]  root level length
 
     // D[] matches with dd
     // RL matches with D[rootLv]
     // root is included in the prefix of RL
     MustEQ()( HashListH2(H)( RotateLeft(H)( Reverse(H)(D), H - h), h), dd);
-    MustEQ()( HashListH2(W)( RL, rootll), PickOne(H)(D, rootLv));
-    Must()( IncludeInPrefix(W)( RL, rootll, MerkleRoot(H, W)(C, rootLv, leaf)));
+    MustEQ()( HashListH2(W)( RL, rootLl), PickOne(H)(D, rootLv));
+    Must()( IncludeInPrefix(W)( RL, rootLl, MerkleRoot(H, W)(C, rootLv, leaf)));
 }
 

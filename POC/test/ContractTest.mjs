@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { DigestDigestTower, proofForSolidity } from "../src/Dev.mjs";
-import { buildL, buildMerkleProofAndLocateRoot, padInput } from "../src/Proof.mjs";
+//import { buildL, buildMerkleProofAndLocateRoot, padInput } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
 import { ethers } from "ethers";
 import { groth16 } from "snarkjs";
@@ -52,6 +52,7 @@ const ZKEY = fs.readFileSync(`./out/${circuit}_js/${circuit}_0001.zkey`);
 
 
 describe("The Contract", function() {
+    this.timeout(200000);
     describe("add", function() {
         it("should update count and dd", async function() {
             const contract = await getContract();

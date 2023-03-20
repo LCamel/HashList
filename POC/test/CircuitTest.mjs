@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import * as path from "path";
 import { wasm as tester } from "circom_tester";
 import { Tower, DigestDigestTower } from "../src/Dev.mjs";
-import { pad0, pad00, padInput, buildL, buildMerkleProofAndLocateRoot, getLengths } from "../src/Proof.mjs";
+import { pad0, pad00, padInput, buildL, buildMerkleProofAndRootLevel, getLengths } from "../src/Proof.mjs";
 import { poseidon } from "circomlibjs";
 import * as tmpfile from "tmp";
 import * as fs from "fs";
@@ -408,7 +408,9 @@ describe("IncludeInPrefix", function () {
         await good(circuit, { in: _in, prefixLen: 2, v: 9 }, { out: 0 });
         await good(circuit, { in: _in, prefixLen: 0, v: 8 }, { out: 0 });
         await good(circuit, { in: _in, prefixLen: 1, v: 8 }, { out: 1 });
+        await good(circuit, { in: _in, prefixLen: 4, v: 9 }, { out: 1 });
         await good(circuit, { in: _in, prefixLen: 4, v: 42 }, { out: 0 });
+
 
         for (let prefixLen = 0; prefixLen <= N; prefixLen++) {
             for (let v of _in.concat(42, 77)) {
@@ -474,3 +476,66 @@ describe("MerkleRoot", function () {
         await good(circuit, { C, rootLv: 0, leaf: 42 }, { root: 42 });
     });
 });
+
+describe("HashTowerWithDigest", function () {
+    this.timeout(200000);
+    it("HashTowerWithDigest H=5 W=4", async () => {
+        const H = 5;
+        const W = 4;
+        const circuit = await getTestCircuit("HashTowerWithDigest", [H, W, 5, 3]);
+        let incDigest = (acc, v, i) => (i == 0) ? v : poseidon([acc, v]);
+        let t = DigestDigestTower(W, incDigest, incDigest);
+        let eventFetcher = (lv, start, len) => t.E[lv].slice(start, start + len);
+
+        for (let i = 0; i < 25; i++) {
+            console.log("for i = ", i);
+            t.add(i);
+            let count = i + 1;
+            let dd = t.DD[0];
+            let D = pad0(t.D, H);
+            for (let j = 0; j <= i; j++) {
+                let [C, RL, rootLv] = buildMerkleProofAndRootLevel(count, W, eventFetcher, j);
+                C = pad00(C, H - 1, W);
+                RL = pad0(RL, W);
+                let leaf = j;
+                let INPUT = { count, dd, D, rootLv, RL, C, leaf };
+                await good(circuit, INPUT, { });
+            }
+        }
+    });
+    it("HashTowerWithDigest H=2 H=3 full", async () => {
+        const H = 2;
+        const W = 3;
+        const circuit = await getTestCircuit("HashTowerWithDigest", [H, W, 3, 2]);
+        let incDigest = (acc, v, i) => (i == 0) ? v : poseidon([acc, v]);
+        let t = DigestDigestTower(W, incDigest, incDigest);
+        let eventFetcher = (lv, start, len) => t.E[lv].slice(start, start + len);
+
+        // 1 1 1  3 3 3 => 12
+        for (let i = 0; i < 12; i++) {
+            console.log("for i = ", i);
+            t.add(i);
+            let count = i + 1;
+            let dd = t.DD[0];
+            let D = pad0(t.D, H);
+            for (let j = 0; j <= i; j++) {
+                let [C, RL, rootLv] = buildMerkleProofAndRootLevel(count, W, eventFetcher, j);
+                C = pad00(C, H - 1, W);
+                RL = pad0(RL, W);
+                let leaf = j;
+                let INPUT = { count, dd, D, rootLv, RL, C, leaf };
+                await good(circuit, INPUT, { });
+            }
+        }
+    });
+
+});
+/*
+signal input count;
+signal input dd;
+signal input D[H];
+signal input rootLv;
+signal input RL[W];
+signal input C[H - 1][W];
+signal input leaf;
+*/
