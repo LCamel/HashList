@@ -334,10 +334,9 @@ describe("Compute_LL_h", function () {
     it("Compute_LL_h", async () => {
         const H = 3;
         const W = 4;
-        const H_BITS = 3;
         const W_BITS = 3;
 
-        const circuit = await getTestCircuit("Compute_LL_h", [H, W, H_BITS, W_BITS]);
+        const circuit = await getTestCircuit("Compute_LL_h", [H, W, W_BITS]);
         for (let count = 0; count <= 84; count++) {
             let [_, LL] = getLengths(count, W);
             let h = LL.length;

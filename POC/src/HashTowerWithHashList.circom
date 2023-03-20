@@ -92,18 +92,18 @@ function compute_h(W, count) {
     }
     return 4242; // impossible
 }
-template Compute_LL_h(H, W, H_BITS, W_BITS) { // keep 1 bit more
+template Compute_LL_h(H, W, W_BITS) { // Compute_LL_h(20, 4, 3) : 139 constraints
     signal input count;
     signal output LL[H];
     signal output h;
 
     h <-- compute_h(W, count);
-    Must()( LessEqThan(H_BITS)([ h, H ]));
+    signal lt_h[H] <== LessThanArray(H)(h); // also forcing h <= H
     var s = 0;
     for (var lv = 0; lv < H; lv++) {
         LL[lv] <-- compute_ll(W, count, lv);
-        Must()( LessEqThan(W_BITS)( [ LL[lv], W ]));
-        MustEQ()( LessThan(H_BITS)( [ lv, h ] ),  IsNonZero()( LL[lv] ) );
+        Must()( LessEqThan(W_BITS)( [ LL[lv], W ]));  // LL[lv] <= W
+        MustEQ()( IsNonZero()( LL[lv] ), lt_h[lv] ); // LL[lv] != 0 iff lv < h
         s += LL[lv] * W**lv;
     }
     s === count;
@@ -188,7 +188,7 @@ template HashTowerWithDigest(H, W, H_BITS, W_BITS) {
     Must()(IsNonZero()(count));
     signal LL[H];
     signal h;
-    (LL, h) <== Compute_LL_h(H, W, H_BITS, W_BITS)(count);
+    (LL, h) <== Compute_LL_h(H, W, W_BITS)(count);
     Must()(LessEqThan(H_BITS)([rootLv, h]));
     signal rootll <== PickOne(H)(LL, rootLv); // root level length  rootll = LL[rootLv]
 
