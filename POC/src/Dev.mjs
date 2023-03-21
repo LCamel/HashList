@@ -273,8 +273,8 @@ function DigestDigestTower(W, incDigest, incDigestDigest) {
         }
         count++;
     }
-    return { W, incDigest, incDigestDigest,
-        get count() { return count }, D, DD, E, add };
+    return { W, incDigest, incDigestDigest, get count() { return count },
+        get dd() { return DD[0] }, D, DD, E, add };
 }
 
 export { Tower, showTower, digestOfRange,

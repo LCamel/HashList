@@ -319,7 +319,7 @@ describe("HashTowerWithDigest", function () {
             let count = i + 1;
             let L = buildL(count, W, eventFetcher);
             for (let j = 0; j <= i; j++) {
-                let INPUT = padInput(W, H, count, t.DD[0], L,
+                let INPUT = padInput(W, H, count, t.dd, L,
                     ...buildMerkleProofAndLocateRoot(count, W, eventFetcher, j));
                 await good(circuit, INPUT, { });
             }
@@ -493,7 +493,7 @@ describe("HashTowerWithDigest", function () {
             let count = i + 1;
             for (let j = 0; j <= i; j++) {
                 let [C, RL, rootLv] = buildMerkleProofAndRootLevel(count, W, eventFetcher, j);
-                let INPUT = padInput(count, t.DD[0], t.D, rootLv, RL, C, j, H, W);
+                let INPUT = padInput(count, t.dd, t.D, rootLv, RL, C, j, H, W);
                 await good(circuit, INPUT, { });
             }
         }
@@ -514,7 +514,7 @@ describe("HashTowerWithDigest", function () {
             let count = i + 1;
             for (let j = 0; j <= i; j++) {
                 let [C, RL, rootLv] = buildMerkleProofAndRootLevel(count, W, eventFetcher, j);
-                let INPUT = padInput(count, t.DD[0], t.D, rootLv, RL, C, j, H, W);
+                let INPUT = padInput(count, t.dd, t.D, rootLv, RL, C, j, H, W);
                 await good(circuit, INPUT, { });
             }
         }

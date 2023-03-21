@@ -350,7 +350,7 @@ describe("DigestDigestTower", function() {
                 tD.push(td);
                 assert.deepEqual(dt.D[lv], td);
             }
-            assert.deepEqual(dt.DD[0], tD.reverse().reduce(incDigestDigest));
+            assert.deepEqual(dt.dd, tD.reverse().reduce(incDigestDigest));
             //console.log("=== i: ", i);
             //console.log("t.L: ", t.L);
             //console.log("dt.D: ", dt.D);
@@ -377,7 +377,7 @@ describe("DigestDigestTower", function() {
             // verify D and DD
             var tD = t.L.map(digest);
             assert.deepEqual(dt.D, tD);
-            assert.equal(dt.DD[0], digest(tD.reverse()));
+            assert.equal(dt.dd, digest(tD.reverse()));
             assert.deepEqual(t.L.map((v, lv) => v.length + t.S[lv].length), dt.E.map(v => v.length));
             assert.deepEqual(t.L.map(v => v.at(-1)), dt.E.map(v => v.at(-1)));
             //console.log("=== i: ", i);

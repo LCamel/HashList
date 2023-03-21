@@ -83,7 +83,7 @@ describe("The Contract", function() {
                 console.log("add: gasUsed: ", txReceipt.gasUsed.toBigInt());
                 [count, dd] = (await contract.getCountAndDd()).map(v => v.toBigInt());
                 assert.equal(count, i + 1);
-                assert.equal(dd, dt.DD[0]);
+                assert.equal(dd, dt.dd);
                 console.log(dd);
 /*
                 for (let j = 0; j <= i; j++) {
