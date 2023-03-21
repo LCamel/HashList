@@ -110,8 +110,27 @@ function showShiftTower() {
 }
 
 
-// SEE: getLengths() in Proof.mjs
+// Given a single number "count", we can reconstruct the "shape"
+// of levels and shifted levels.
+function getLengths(count, W) {
+    let FL = []; // full level lengths (S + L)
+    let LL = []; // level lengths (L)
+    for (let lv = 0, z = 0; true; lv++) {
+        z += W ** lv;
+        if (count < z) break;
+        let fl = Math.floor((count - z) / W ** lv) + 1;
+        FL.push(fl);
+        LL.push((fl - 1) % W + 1);
+    }
+    return [FL, LL];
+}
 
+// eventFetcher: (lv, start, len) => [val1, val2 ...]
+// only for debugging
+function buildL(count, W, eventFetcher) {
+    let [FL, LL] = getLengths(count, W);
+    return FL.map((fl, lv) => eventFetcher(lv, fl - LL[lv], LL[lv]));
+}
 
 // Since we can derive the "shape" of L and S from count,
 // we can use events to store them and restore them later.
@@ -260,5 +279,5 @@ function DigestDigestTower(W, incDigest, incDigestDigest) {
 
 export { Tower, showTower, digestOfRange,
     LoopTower, LoopDownTower, ShiftTower, showShiftTower,
-    incDigestOfRange, DigestTower,
+    getLengths, buildL, incDigestOfRange, DigestTower,
     verifyMerkleProof, PolysumTower, proofForSolidity, DigestDigestTower };

@@ -1,8 +1,8 @@
 //import { strict as assert } from 'node:assert';
 import { assert } from "chai";
-import { Tower, digestOfRange, LoopTower, LoopDownTower, ShiftTower, incDigestOfRange, DigestTower, verifyMerkleProof, PolysumTower, DigestDigestTower } from "../src/Dev.mjs";
-import { getLengths, buildL, buildMerkleProofAndRootLevel } from "../src/Proof.mjs";
-import { poseidon } from "circomlibjs"; // for polysum
+import { Tower, digestOfRange, LoopTower, LoopDownTower, ShiftTower, getLengths, buildL, incDigestOfRange, DigestTower, verifyMerkleProof, PolysumTower, DigestDigestTower } from "../src/Dev.mjs";
+//import { buildMerkleProofAndRootLevel } from "../src/Proof.mjs";
+import { poseidon } from "circomlibjs";
 
 
 describe("Tower", function() {
