@@ -45,14 +45,8 @@ const pad = (arr, len, val) => arr.concat(Array(len - arr.length).fill(val));
 const pad0 = (arr, len) => pad(arr, len, 0n);
 const pad00 = (arr2D, h, w) => pad(arr2D, h, []).map(a => pad0(a, w));
 
-function padInput(W, H, count, dd, L, C, CI, rootLevel, rootIdxInL) {
-    const LL = pad0(L.map((l) => l.length), H);
-    const h = L.length;
-    L = pad00(L, H, W);
-    C = pad00(C, H, W);
-    CI = pad0(CI, H);
-    const leaf = C[0][CI[0]];
-    return { count, dd, L, LL, h, rootLevel, rootIdxInL, C, CI, leaf };
+function padInput(count, dd, D, rootLv, RL, C, leaf, H, W) {
+    return { count, dd, D:pad0(D, H), rootLv, RL:pad0(RL, W), C:pad00(C, H - 1, W), leaf };
 }
 
 export { getLengths, buildL, buildMerkleProofAndRootLevel, pad0, pad00, padInput };

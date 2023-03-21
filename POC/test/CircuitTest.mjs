@@ -491,18 +491,14 @@ describe("HashTowerWithDigest", function () {
             console.log("for i = ", i);
             t.add(i);
             let count = i + 1;
-            let dd = t.DD[0];
-            let D = pad0(t.D, H);
             for (let j = 0; j <= i; j++) {
                 let [C, RL, rootLv] = buildMerkleProofAndRootLevel(count, W, eventFetcher, j);
-                C = pad00(C, H - 1, W);
-                RL = pad0(RL, W);
-                let leaf = j;
-                let INPUT = { count, dd, D, rootLv, RL, C, leaf };
+                let INPUT = padInput(count, t.DD[0], t.D, rootLv, RL, C, j, H, W);
                 await good(circuit, INPUT, { });
             }
         }
     });
+
     it("HashTowerWithDigest H=2 H=3 full", async () => {
         const H = 2;
         const W = 3;
@@ -516,26 +512,11 @@ describe("HashTowerWithDigest", function () {
             console.log("for i = ", i);
             t.add(i);
             let count = i + 1;
-            let dd = t.DD[0];
-            let D = pad0(t.D, H);
             for (let j = 0; j <= i; j++) {
                 let [C, RL, rootLv] = buildMerkleProofAndRootLevel(count, W, eventFetcher, j);
-                C = pad00(C, H - 1, W);
-                RL = pad0(RL, W);
-                let leaf = j;
-                let INPUT = { count, dd, D, rootLv, RL, C, leaf };
+                let INPUT = padInput(count, t.DD[0], t.D, rootLv, RL, C, j, H, W);
                 await good(circuit, INPUT, { });
             }
         }
     });
-
 });
-/*
-signal input count;
-signal input dd;
-signal input D[H];
-signal input rootLv;
-signal input RL[W];
-signal input C[H - 1][W];
-signal input leaf;
-*/
