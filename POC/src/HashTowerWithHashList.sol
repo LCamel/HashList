@@ -35,14 +35,16 @@ contract HashTowerWithHashList {
         uint64 fl;
         uint8 ll; // TODO: or just uint256 ?
         uint8 lv;
-        //uint64 powWLv = 1; // powWLv = W ** lv // TODO
+        uint64 W_pow_lv = 1; // W ** lv
 
         // find the lowest level that has space
-        for (; true; lv++) {
-            z += W ** lv;
-            fl = (count < z) ? 0 : (count - z) / W ** lv + 1;
+        while (true) {
+            z += W_pow_lv;
+            fl = (count < z) ? 0 : (count - z) / W_pow_lv + 1;
             ll = uint8((fl == 0) ? 0 : (fl - 1) % W + 1);
             if (ll < W) break;
+            lv++;
+            W_pow_lv *= W;
         }
         // append and go downward
         uint256 v = (lv > 0) ? D[lv - 1] : toAdd;
@@ -54,11 +56,12 @@ contract HashTowerWithHashList {
             D[lv] = d;
             DD[lv] = dd;
             if (lv == 0) break;
-            z -= W ** lv;
+            z -= W_pow_lv;
             prevDd = dd;
             lv--;
+            W_pow_lv /= W;
             // the rest levels are all full
-            fl = (count - z) / W ** lv + 1;
+            fl = (count - z) / W_pow_lv + 1;
             v = (lv > 0) ? D[lv - 1] : toAdd;
             emit Add(lv, fl, v);  // emit event
             d = v;
