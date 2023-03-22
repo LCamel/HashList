@@ -57,44 +57,7 @@ describe("PickOne", function () {
         });
     });
 });
-/*
-describe("PickOne2D", function () {
-    this.timeout(200000);
 
-    it("PickOne2D", async () => {
-        const circuit = await getTestCircuit("PickOne2D", [3, 5]);
-
-        const arr = [[7, 5, 8, 8, 9],
-                     [2, 5, 8, 3, 9],
-                     [8, 5, 4, 8, 6]];
-        await good(circuit, {
-            in: arr,
-            row: 2,
-            col: 4
-        }, {
-            out: 6
-        });
-        await good(circuit, {
-            in: arr,
-            row: 1,
-            col: 0
-        }, {
-            out: 2
-        });
-
-        await bad(circuit, {
-            in: arr,
-            row: 3, // out of bound
-            col: 2
-        });
-        await bad(circuit, {
-            in: arr,
-            row: 0,
-            col: 5 // out of bound
-        });
-    });
-});
-*/
 describe("H2", function () {
     this.timeout(200000);
 
@@ -158,37 +121,7 @@ describe("HashListH2", function () {
         await bad(circuit, { in: [100, 200, 300, 400], len: 5 });
     });
 });
-/*
-describe("MustLT", function () {
-    this.timeout(200000);
 
-    it("MustLT", async () => {
-        const circuit = await getTestCircuit("MustLT", [3]);
-
-        await good(circuit, { a: 1, b: 2 }, {});
-        await good(circuit, { a: 0, b: 7 }, {});
-
-        await bad(circuit, { a: 2, b: 2 });
-        await bad(circuit, { a: 0, b: 0 });
-
-        // it will never pass for bad out-of-bound inputs
-        await bad(circuit, { a: 8, b: 8 });
-        await bad(circuit, { a: 9, b: 7 });
-        await bad(circuit, { a: 9, b: 8 });
-        await bad(circuit, { a: 200, b: 100 });
-
-        for (let i = 0; i < 8; i++) {
-            for (let j = 0; j < 8; j++) {
-                if (i < j) {
-                    await good(circuit, { a: i, b: j }, {});
-                } else {
-                    await bad(circuit, { a: i, b: j });
-                }
-            }
-        }
-    });
-});
-*/
 describe("Reverse", function () {
     this.timeout(200000);
 
@@ -221,112 +154,6 @@ describe("RotateLeft", function () {
         await bad(circuit, { in: [100, 200, 300, 400], n: 4 });  // out of bond
     });
 });
-/*
-describe("CheckDigestAndPickRoot", function () {
-    this.timeout(200000);
-
-    it("CheckDigestAndPickRoot", async () => {
-        const circuit = await getTestCircuit("CheckDigestAndPickRoot", [5, 4]);
-
-        const digest = (vs) => vs.reduce((acc, v) => poseidon([acc, v]));
-
-        const H = 5;
-        const W = 4;
-        const t = Tower(W, digest);
-        for (let i = 0n; i < 85; i++) {
-            t.add(i);
-
-            //let rootLevel = 0;
-            //let rootIdxInL = 0;
-            let INPUT = {
-                L: pad00(t.L, H, W),
-                LL: pad0(t.L.map(l => l.length), H),
-                h: t.L.length,
-                dd: digest(t.L.map(digest).reverse()),
-                //rootLevel,
-                //rootIdxInL
-            };
-            for (let lv = 0; lv < t.L.length; lv++) {
-                for (let j = 0; j < t.L[lv].length; j++) {
-                    INPUT.rootLevel = lv;
-                    INPUT.rootIdxInL = j;
-                    await good(circuit, INPUT, { root: t.L[lv][j] });
-                }
-            }
-            //console.log(JSON.stringify(INPUT, undefined, 4));
-        };
-    });
-});
-*/
-/*
-describe("NotEqual", function () {
-    this.timeout(200000);
-
-    it("NotEqual", async () => {
-        const circuit = await getTestCircuit("NotEqual.circom");
-
-        await good(circuit, { a: 1, b: 2 }, { out: 1 });
-        await good(circuit, { a: 2, b: 2 }, { out: 0 });
-    });
-});
-*/
-/*
-describe("CheckMerkleProof", function () {
-    this.timeout(200000);
-
-    it("CheckMerkleProof", async () => {
-        const circuit = await getTestCircuit("CheckMerkleProof", [5, 4]);
-
-        const digest = (vs) => vs.reduce((acc, v) => poseidon([acc, v]));
-        //let H = 5;
-        //let W = 4;
-        let C = [];
-        C[0] = [3, 4, 5, 6];
-        C[1] = [2, digest(C[0]), 4, 8];
-        C[2] = [5, 9, 7, digest(C[1])];
-        C[3] = [7, 6, digest(C[2]), 0];
-        C[4] = [0, 0, 0, 0];
-        let INPUT = { C, CI: [3, 1, 3, 2, 0], rootLevel: 3 };
-
-        await good(circuit, INPUT, { root: C[3][2], leaf: 6 });
-    });
-});
-*/
-/*
-describe("CheckLLAndh", function () {
-    this.timeout(200000);
-
-    it("CheckLLAndh", async () => {
-        const circuit = await getTestCircuit("CheckLLAndh", [5, 4]);
-        let INPUT = { LL: [1, 2, 1, 0, 0], h: 3, count: 1 + 2 * 4 + 1 * 16 };
-        await good(circuit, INPUT, { });
-    });
-});
-*/
-/*
-describe("HashTowerWithDigest", function () {
-    this.timeout(200000);
-    it("HashTowerWithDigest", async () => {
-        const circuit = await getTestCircuit("HashTowerWithDigest", [5, 4]);
-        const H = 5;
-        const W = 4;
-        let incDigest = (acc, v, i) => (i == 0) ? v : poseidon([acc, v]);
-        let t = DigestDigestTower(W, incDigest, incDigest);
-        let eventFetcher = (lv, start, len) => t.E[lv].slice(start, start + len);
-
-        for (let i = 0; i < 25; i++) {
-            t.add(i);
-            let count = i + 1;
-            let L = buildL(count, W, eventFetcher);
-            for (let j = 0; j <= i; j++) {
-                let INPUT = padInput(W, H, count, t.dd, L,
-                    ...buildMerkleProofAndLocateRoot(count, W, eventFetcher, j));
-                await good(circuit, INPUT, { });
-            }
-        }
-    });
-});
-*/
 
 // this test does NOT proof that the circuit has enough constraints
 describe("Compute_LL_h", function () {
