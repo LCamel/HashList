@@ -24,7 +24,7 @@ async function getContract() {
     const ABI = [
         "event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value)",
         "function add(uint)",
-        "function getCountAndDd() public view returns (uint64, uint256)",
+        "function getCountAndDd() public view returns (uint256, uint256)",
         "function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool)",
     ];
     const signer = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider);
