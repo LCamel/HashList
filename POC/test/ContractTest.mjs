@@ -73,6 +73,7 @@ describe("The Contract", function() {
             let incDigest = (acc, v, i) => (i == 0) ? v : P2(acc, v);
             let incDigestDigest = incDigest;
             let dt = DigestDigestTower(4, incDigest, incDigestDigest);
+            let gas = [];
             for (let i = 0; i < 150; i++) {
                 console.log("=== i: ", i);
                 dt.add(i);
@@ -80,7 +81,8 @@ describe("The Contract", function() {
 
                 const txResponse = await contract.add(i);
                 const txReceipt = await txResponse.wait();
-                console.log("add: gasUsed: ", txReceipt.gasUsed.toBigInt());
+                console.log("add: gasUsed: ", txReceipt.gasUsed.toNumber());
+                gas.push(txReceipt.gasUsed.toNumber());
                 [count, dd] = (await contract.getCountAndDd()).map(v => v.toBigInt());
                 assert.equal(count, i + 1);
                 assert.equal(dd, dt.dd);
@@ -117,7 +119,9 @@ describe("The Contract", function() {
                 }
                 */
             }
-
+            let sum = gas.reduce((acc, v) => acc + v);
+            let avg = sum / gas.length;
+            console.log("gas: sum: ", sum, " avg: ", avg, " all: ", JSON.stringify(gas));
         });
     });
 });
