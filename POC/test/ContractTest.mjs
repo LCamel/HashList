@@ -76,8 +76,10 @@ describe("The Contract", function() {
             let gas = [];
             for (let i = 0; i < 150; i++) {
                 console.log("=== i: ", i);
+                let oldEventCounts = dt.E.map(e => e.length);
                 dt.add(i);
-                //console.log(pt.dd);
+                let eventCountDiff = dt.E.map((e, lv) => e.length - (oldEventCounts[lv] || 0));
+
 
                 const txResponse = await contract.add(i);
                 const txReceipt = await txResponse.wait();
@@ -87,6 +89,23 @@ describe("The Contract", function() {
                 assert.equal(count, i + 1);
                 assert.equal(dd, dt.dd);
                 console.log(dd);
+
+
+                assert.equal(txReceipt.events.length, eventCountDiff.reduce((acc, d) => acc + d));
+                let events = txReceipt.events.reverse(); // might be top down
+                for (let lv = 0; lv < eventCountDiff.length; lv++) {
+                    if (eventCountDiff[lv] > 0) {
+                        assert.equal(eventCountDiff[lv], 1);
+                        let event = events[lv].args;
+                        assert.equal(event[0], lv);
+                        assert.equal(event[1], dt.E[lv].length - 1);
+                        assert.equal(event[2], dt.E[lv].at(-1));
+                        // TODO: topic test
+                    }
+                }
+
+
+
 /*
                 for (let j = 0; j <= i; j++) {
                     count = Number(count);
