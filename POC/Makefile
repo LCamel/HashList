@@ -11,7 +11,7 @@ t:
 	npx mocha --timeout 30000
 
 c:
-	./scripts/c.sh HashTowerPolysumH4W4R2
+	./scripts/c.sh HashTowerWithHashListH20W4
 
 d:
 	./scripts/deploy.sh

@@ -46,7 +46,7 @@ const W = 4;
 
 const H = 4;
 
-const circuit = "HashTowerPolysumH4W4R2";
+const circuit = "HashTowerWithHashListH20W4";
 const WASM = fs.readFileSync(`./out/${circuit}_js/${circuit}.wasm`);
 const ZKEY = fs.readFileSync(`./out/${circuit}_js/${circuit}_0001.zkey`);
 
