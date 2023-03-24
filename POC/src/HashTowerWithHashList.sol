@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 contract Poseidon2 {
     function poseidon(uint256[2] memory) public pure returns (uint256) {}
 }
-Poseidon2 constant P2 = Poseidon2(0x1111111122222222333333334444444400000002);
+Poseidon2 constant P2 = Poseidon2(0xd9145CCE52D386f254917e481eB44e9943F39138);
 
 // capacity = W * (W**0 + W**1 + ... + W**(H - 1)) = W * (W**H - 1) / (W - 1)
 // 4 * (4^0 + 4^1 + 4^2 + ... 4^19) = 1_466_015_503_700
