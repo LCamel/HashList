@@ -41,6 +41,10 @@ contract HashTowerWithHashList {
         uint256 lv;
         uint256 W_pow_lv = 1; // W ** lv
 
+        uint256 d;
+        uint256 dd;
+        uint256 v;
+
         // find the lowest level that has space
         while (true) {
             z += W_pow_lv;
@@ -50,13 +54,27 @@ contract HashTowerWithHashList {
             lv++;
             W_pow_lv *= W;
         }
+
         // append and go downward
-        uint256 v = (lv > 0) ? D[lv - 1] : toAdd;
+        if (lv > 0) {
+            v = D[lv - 1];
+        } else {
+            v = toAdd;
+        }
         emit Add(uint8(lv), uint64(fl), v);
-        uint256 d = (ll == 0) ? v : P2.poseidon([D[lv], v]);
-        uint256 dd = (fl == ll) ? d : P2.poseidon([DD[lv + 1], d]); // fl == ll means there is no level above
-        //uint256 d; if (ll == 0) { d = v; } else { gasMark = gasleft(); d = P2.poseidon([D[lv], v]); debugCounter += gasMark - gasleft(); }
-        //uint256 dd; if (fl == ll) { dd = d; } else { gasMark = gasleft(); dd = P2.poseidon([DD[lv + 1], d]); debugCounter += gasMark - gasleft(); }
+
+        if (ll == 0) {
+            d = v;
+        } else {
+            d = P2.poseidon([D[lv], v]);
+        }
+
+        if (fl == ll) { // fl == ll means there is no level above
+            dd = d;
+        } else {
+            dd = P2.poseidon([DD[lv + 1], d]);
+        }
+
         uint256 prevDd;
         while (true) {
             D[lv] = d;
@@ -68,11 +86,14 @@ contract HashTowerWithHashList {
             W_pow_lv /= W;
             // the rest levels are all full
             fl = (count - z) / W_pow_lv + 1;
-            v = (lv > 0) ? D[lv - 1] : toAdd;
+            if (lv > 0) {
+                v = D[lv - 1];
+            } else {
+                v = toAdd;
+            }
             emit Add(uint8(lv), uint64(fl), v);
             d = v;
             dd = P2.poseidon([prevDd, d]);
-            //gasMark = gasleft(); dd = P2.poseidon([prevDd, d]); debugCounter += gasMark - gasleft();
         }
         //console.log("count: ", count, " debugCounter: ", debugCounter);
         _count = count + 1;
