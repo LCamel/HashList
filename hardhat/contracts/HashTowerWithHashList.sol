@@ -48,9 +48,15 @@ contract HashTowerWithHashList {
         // find the lowest level that has space
         while (true) {
             z += W_pow_lv;
-            fl = (count < z) ? 0 : (count - z) / W_pow_lv + 1;
-            ll = (fl == 0) ? 0 : (fl - 1) % W + 1;
-            if (ll < W) break;
+            if (count < z) {
+                fl = 0;
+                ll = 0;
+                break;
+            } else {
+                fl = (count - z) / W_pow_lv + 1;
+                ll = (fl - 1) % W + 1;
+                if (ll != W) break;
+            }
             lv++;
             W_pow_lv *= W;
         }
