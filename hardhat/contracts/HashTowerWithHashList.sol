@@ -32,11 +32,8 @@ contract HashTowerWithHashList {
         uint256 gasMark;
 
         require(toAdd < SNARK_SCALAR_FIELD, "HashTowerWithHashList: toAdd must be < SNARK_SCALAR_FIELD");
-        uint256 count;
-        gasMark = gasleft();
+        uint256 count = _count;
         count = _count;
-        debugGas += gasMark - gasleft();
-        debugNum++;
         require(count < CAPACITY, "HashTowerWithHashList: full");
 
         uint256 lv;
@@ -67,32 +64,26 @@ contract HashTowerWithHashList {
 
         // append and go downward
         if (lv > 0) {
-            gasMark = gasleft();
             v = D[lv - 1];
-            debugGas += gasMark - gasleft();
-            debugNum++;
         } else {
             v = toAdd;
         }
+        gasMark = gasleft();
         emit Add(uint8(lv), uint64(fl), v);
+        debugGas += gasMark - gasleft();
+        debugNum++;
 
         if (ll == 0) {
             d = v;
         } else {
-            gasMark = gasleft();
             d = D[lv]; // tmp for gas counting only
-            debugGas += gasMark - gasleft();
-            debugNum++;
             d = P2.poseidon([d, v]);
         }
 
         if (fl == ll) { // fl == ll means there is no level above
             dd = d;
         } else {
-            gasMark = gasleft();
             dd = DD[lv + 1]; // tmp for gas counting only
-            debugGas += gasMark - gasleft();
-            debugNum++;
             dd = P2.poseidon([dd, d]);
         }
 
@@ -109,14 +100,14 @@ contract HashTowerWithHashList {
             // the rest levels are all full
             fl = (count - z) / W_pow_lv + 1;
             if (lv > 0) {
-                gasMark = gasleft();
                 v = D[lv - 1];
-                debugGas += gasMark - gasleft();
-                debugNum++;
             } else {
                 v = toAdd;
             }
+            gasMark = gasleft();
             emit Add(uint8(lv), uint64(fl), v);
+            debugGas += gasMark - gasleft();
+            debugNum++;
             d = v;
             dd = P2.poseidon([prevDd, d]);
         }
