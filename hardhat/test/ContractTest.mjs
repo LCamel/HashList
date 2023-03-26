@@ -5,37 +5,9 @@ import { poseidon } from "circomlibjs";
 //import { ethers } from "ethers";
 //import { groth16 } from "snarkjs";
 //import * as fs from "fs";
+import { Poseidon2Code } from "./Poseidon2Code.mjs";
 
-/*
-async function getLatestContractAddress(provider, account) {
-    var nonce = await provider.getTransactionCount(account);
-    var address;
-    while (nonce >= 0) {
-        address = ethers.utils.getContractAddress({from: account, nonce: nonce});
-        if ((await provider.getCode(address)).length > 2) break;
-        nonce--;
-    }
-    return address;
-}
 
-async function getContract() {
-    const provider = new ethers.providers.JsonRpcProvider();
-    const address = await getLatestContractAddress(provider, (await provider.listAccounts())[0]); // from deployer
-    const ABI = [
-        "event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value)",
-        "function add(uint)",
-        "function getCountAndDd() public view returns (uint256, uint256)",
-        "function prove(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) external view returns (bool)",
-    ];
-    const signer = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider);
-    const contract = new ethers.Contract(address, ABI, signer);
-    return contract;
-}
-
-function P1(v) {
-    return poseidon([v]);
-}
-*/
 function P2(v1, v2) {
     return poseidon([v1, v2]);
 }
@@ -55,6 +27,13 @@ const ZKEY = fs.readFileSync(`./out/${circuit}_js/${circuit}_0001.zkey`);
 
 describe("The Contract", function() {
     this.timeout(200000);
+
+    before(async function() {
+        await network.provider.send("hardhat_setCode", [
+            "0xd9145CCE52D386f254917e481eB44e9943F39138",
+            Poseidon2Code
+            ]);
+    });
     describe("add", function() {
         it("should update count and dd", async function() {
             const HashTowerWithHashList = await ethers.getContractFactory("HashTowerWithHashList");
@@ -79,7 +58,7 @@ describe("The Contract", function() {
             let incDigestDigest = incDigest;
             let dt = DigestDigestTower(4, incDigest, incDigestDigest);
             let gas = [];
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 150; i++) {
                 console.log("=== i: ", i);
                 let oldEventCounts = dt.E.map(e => e.length);
                 dt.add(i);
