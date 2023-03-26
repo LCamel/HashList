@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-//import "hardhat/console.sol";
+import "hardhat/console.sol";
 //import "./HashTowerWithHashListH20W4Verifier.sol";
 contract Poseidon2 {
     function poseidon(uint256[2] memory) public pure returns (uint256) {}
@@ -27,8 +27,9 @@ contract HashTowerWithHashList {
     event Add(uint8 indexed level, uint64 indexed lvFullIndex, uint256 value); // TODO: merge fields
 
     function add(uint256 toAdd) public {
-        //uint256 debugCounter;
-        //uint256 gasMark;
+        uint256 debugNum;
+        uint256 debugGas;
+        uint256 gasMark;
 
         require(toAdd < SNARK_SCALAR_FIELD, "HashTowerWithHashList: toAdd must be < SNARK_SCALAR_FIELD");
 
@@ -72,13 +73,21 @@ contract HashTowerWithHashList {
         if (ll == 0) {
             d = v;
         } else {
-            d = P2.poseidon([D[lv], v]);
+            d = D[lv]; // tmp for gas counting only
+            gasMark = gasleft();
+            d = P2.poseidon([d, v]);
+            debugGas += gasMark - gasleft();
+            debugNum++;
         }
 
         if (fl == ll) { // fl == ll means there is no level above
             dd = d;
         } else {
-            dd = P2.poseidon([DD[lv + 1], d]);
+            dd = DD[lv + 1]; // tmp for gas counting only
+            gasMark = gasleft();
+            dd = P2.poseidon([dd, d]);
+            debugGas += gasMark - gasleft();
+            debugNum++;
         }
 
         uint256 prevDd;
@@ -99,10 +108,13 @@ contract HashTowerWithHashList {
             }
             emit Add(uint8(lv), uint64(fl), v);
             d = v;
+            gasMark = gasleft();
             dd = P2.poseidon([prevDd, d]);
+            debugGas += gasMark - gasleft();
+            debugNum++;
         }
-        //console.log("count: ", count, " debugCounter: ", debugCounter);
         _count = count + 1;
+        console.log("count: ", count, debugNum, debugGas);
     }
 
     function getCountAndDd() public view returns (uint256, uint256) {
@@ -116,15 +128,3 @@ contract HashTowerWithHashList {
     }
     */
 }
-
-//uint256 debugCounter;
-//uint256 gasMark;
-//console.log("count: ", count, " debugCounter: ", debugCounter);
-
-//uint256 d; if (ll == 0) { d = v; } else { d = P2.poseidon([D[lv], v]); debugCounter++; }
-//uint256 dd; if (fl == ll) { dd = d; } else { dd = P2.poseidon([DD[lv + 1], d]); debugCounter++; }
-//dd = P2.poseidon([prevDd, d]); debugCounter++;
-
-//uint256 d; if (ll == 0) { d = v; } else { gasMark = gasleft(); d = P2.poseidon([D[lv], v]); debugCounter += gasMark - gasleft(); }
-//uint256 dd; if (fl == ll) { dd = d; } else { gasMark = gasleft(); dd = P2.poseidon([DD[lv + 1], d]); debugCounter += gasMark - gasleft(); }
-//gasMark = gasleft(); dd = P2.poseidon([prevDd, d]); debugCounter += gasMark - gasleft();
