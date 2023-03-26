@@ -74,26 +74,24 @@ contract HashTowerWithHashList {
             d = v;
         } else {
             d = D[lv]; // tmp for gas counting only
-            gasMark = gasleft();
             d = P2.poseidon([d, v]);
-            debugGas += gasMark - gasleft();
-            debugNum++;
         }
 
         if (fl == ll) { // fl == ll means there is no level above
             dd = d;
         } else {
             dd = DD[lv + 1]; // tmp for gas counting only
-            gasMark = gasleft();
             dd = P2.poseidon([dd, d]);
-            debugGas += gasMark - gasleft();
-            debugNum++;
         }
 
         uint256 prevDd;
         while (true) {
+            gasMark = gasleft();
             D[lv] = d;
             DD[lv] = dd;
+            debugGas += gasMark - gasleft();
+            debugNum += 2;
+
             if (lv == 0) break;
             z -= W_pow_lv;
             prevDd = dd;
@@ -108,12 +106,14 @@ contract HashTowerWithHashList {
             }
             emit Add(uint8(lv), uint64(fl), v);
             d = v;
-            gasMark = gasleft();
             dd = P2.poseidon([prevDd, d]);
-            debugGas += gasMark - gasleft();
-            debugNum++;
         }
-        _count = count + 1;
+        count++;
+        gasMark = gasleft();
+        //_count = count + 1;
+        _count = count;
+        debugGas += gasMark - gasleft();
+        debugNum++;
         console.log("count: ", count, debugNum, debugGas);
     }
 
