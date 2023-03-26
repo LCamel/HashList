@@ -1,29 +1,11 @@
 import { assert } from "chai";
-import { DigestDigestTower, proofForSolidity } from "../src/Dev.mjs";
-//import { buildL, buildMerkleProofAndLocateRoot, padInput } from "../src/Proof.mjs";
+import { DigestDigestTower } from "../src/Dev.mjs";
 import { poseidon } from "circomlibjs";
-//import { ethers } from "ethers";
-//import { groth16 } from "snarkjs";
-//import * as fs from "fs";
 import { Poseidon2Code } from "./Poseidon2Code.mjs";
-
 
 function P2(v1, v2) {
     return poseidon([v1, v2]);
 }
-
-/*
-const FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-//const R = 2n;
-const R = 18394430908091344617384880311697507424035533102877559791950913628996628114390n;
-const W = 4;
-
-const H = 4;
-
-const circuit = "HashTowerWithHashListH20W4";
-const WASM = fs.readFileSync(`./out/${circuit}_js/${circuit}.wasm`);
-const ZKEY = fs.readFileSync(`./out/${circuit}_js/${circuit}_0001.zkey`);
-*/
 
 describe("The Contract", function() {
     this.timeout(200000);
@@ -38,18 +20,7 @@ describe("The Contract", function() {
         it("should update count and dd", async function() {
             const HashTowerWithHashList = await ethers.getContractFactory("HashTowerWithHashList");
             const contract = await HashTowerWithHashList.deploy();
-            /*
-            async function eventFetcher(lv, start, len) {
-                //console.log("eventFetcher(): lv: ", lv, " start: ", start, " len: ", len);
-                const indexes = [];
-                for (let i = start; i < start + len; i++) indexes.push(i);
-                const filter = contract.filters.Add(lv, indexes);
-                const events = await contract.queryFilter(filter);
-                return events.map((e) => e.args.value.toBigInt());
-            }
-            */
 
-            //console.log("contract address: ", contract.address);
             var [count, dd] = (await contract.getCountAndDd()).map(v => v.toBigInt());
             assert.equal(count, 0n);
             assert.equal(dd, 0n);
@@ -87,40 +58,6 @@ describe("The Contract", function() {
                         // TODO: topic test
                     }
                 }
-
-
-
-/*
-                for (let j = 0; j <= i; j++) {
-                    count = Number(count);
-                    let L = buildL(count, W, eventFetcher);
-                    L = await Promise.all(L);
-                    //console.log("L: ", L);
-                    let [C, CI, rootLevel, rootIdxInL] = buildMerkleProofAndLocateRoot(count, W, eventFetcher, j);
-                    if (!C.length) continue;
-                    C = await(Promise.all(C));
-                    //console.log(C);
-                    //console.log(CI);
-                    //console.log(rootLevel);
-                    //console.log(rootIdxInL);
-
-                    let input = padInput(W, H, dd, L, C, CI, rootLevel, rootIdxInL);
-
-                    const { proof, publicSignals } = await groth16.fullProve(input, WASM, ZKEY);
-                    //console.log(proof);
-                    //console.log(publicSignals);
-
-
-                    console.log("calling contract.prove()...");
-                    const [a, b, c] = proofForSolidity(proof);
-                    const isValid = await contract.prove(a, b, c);
-                    assert(isValid);
-
-                    const gas = await contract.estimateGas.prove(a, b, c);
-                    console.log("estimated gas: " + gas);
-                    //console.log("done: i: ", i, " j: ", j, "\n");
-                }
-                */
             }
             let sum = gas.reduce((acc, v) => acc + v);
             let avg = sum / gas.length;
