@@ -35,11 +35,11 @@ contract HashTowerWithHashList {
         uint256 count = _count;
         require(count < CAPACITY, "HashTowerWithHashList: full");
 
-        uint256 z;
-        uint256 fl;
-        uint256 ll;
         uint256 lv;
         uint256 W_pow_lv = 1; // W ** lv
+        uint256 z = 1;
+        uint256 fl;
+        uint256 ll;
 
         uint256 d;
         uint256 dd;
@@ -47,7 +47,6 @@ contract HashTowerWithHashList {
 
         // find the lowest level that has space
         while (true) {
-            z += W_pow_lv;
             if (count < z) {
                 fl = 0;
                 ll = 0;
@@ -55,10 +54,11 @@ contract HashTowerWithHashList {
             } else {
                 fl = (count - z) / W_pow_lv + 1;
                 ll = (fl - 1) % W + 1;
-                if (ll != W) break;
+                if (ll != W) break; // most of the time
             }
             lv++;
             W_pow_lv *= W;
+            z += W_pow_lv;
         }
 
         // append and go downward
