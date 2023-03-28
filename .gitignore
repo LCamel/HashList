@@ -11,3 +11,7 @@
 .pnp.*
 
 node_modules/
+
+# hardhat
+artifacts/
+cache/
